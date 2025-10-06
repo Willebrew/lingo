@@ -64,18 +64,46 @@ export default function Sidebar({ onClose }: SidebarProps) {
     try {
       setIsDeleting(true);
 
-      // Delete all user's conversations
-      console.log('[Sidebar] Deleting conversations...');
+      console.log('[Sidebar] Starting account deletion...');
+      const { auth, db } = await import('@/lib/firebase');
+      const { doc, deleteDoc, updateDoc, arrayRemove } = await import('firebase/firestore');
+      const { deleteUser } = await import('firebase/auth');
+
+      // Handle conversations: remove user from participants or delete if they're the only one
+      console.log('[Sidebar] Processing conversations...');
       for (const conv of conversations) {
-        await deleteConversation(conv.id);
+        if (conv.participants.length === 1) {
+          // User is the only participant - delete the conversation
+          console.log(`[Sidebar] Deleting conversation ${conv.id} (user is only participant)`);
+          await deleteConversation(conv.id);
+        } else if (conv.participants.length === 2) {
+          // If removing this user would leave only 1 person, delete the conversation
+          // (1-person conversations don't make sense)
+          console.log(`[Sidebar] Deleting conversation ${conv.id} (would leave only 1 participant)`);
+          await deleteConversation(conv.id);
+        } else {
+          // Multiple participants remain - just remove this user from the conversation
+          console.log(`[Sidebar] Removing user from conversation ${conv.id}`);
+          await updateDoc(doc(db, 'conversations', conv.id), {
+            participants: arrayRemove(currentUser.id),
+            [`participantDetails.${currentUser.id}`]: null
+          });
+        }
       }
+
+      // Delete all messages sent by this user
+      console.log('[Sidebar] Deleting user messages...');
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const messagesQuery = query(
+        collection(db, 'messages'),
+        where('senderId', '==', currentUser.id)
+      );
+      const messageSnapshot = await getDocs(messagesQuery);
+      const deletionPromises = messageSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletionPromises);
 
       // Delete user document from Firestore
       console.log('[Sidebar] Deleting user document from Firestore...');
-      const { auth, db } = await import('@/lib/firebase');
-      const { doc, deleteDoc } = await import('firebase/firestore');
-      const { deleteUser } = await import('firebase/auth');
-
       await deleteDoc(doc(db, 'users', currentUser.id));
 
       // Delete user from Firebase Auth
