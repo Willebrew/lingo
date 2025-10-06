@@ -70,13 +70,17 @@ async function encryptPrivateKey(privateKey: string, password: string): Promise<
  */
 async function decryptPrivateKey(encryptedPrivateKey: string, password: string): Promise<string | null> {
   try {
+    console.log('[encryption] Decrypting private key...');
     const combined = naclUtil.decodeBase64(encryptedPrivateKey);
+    console.log('[encryption] Decoded encrypted key, length:', combined.length);
     const salt = combined.slice(0, 16);
     const iv = combined.slice(16, 28);
     const data = combined.slice(28);
 
+    console.log('[encryption] Deriving key from password...');
     const key = await deriveKeyFromPassword(password, salt);
 
+    console.log('[encryption] Attempting AES-GCM decryption...');
     const decryptedData = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: iv },
       key,
@@ -84,9 +88,12 @@ async function decryptPrivateKey(encryptedPrivateKey: string, password: string):
     );
 
     const decoder = new TextDecoder();
-    return decoder.decode(decryptedData);
+    const result = decoder.decode(decryptedData);
+    console.log('[encryption] Decryption successful');
+    return result;
   } catch (error) {
-    console.error('Failed to decrypt private key:', error);
+    console.error('[encryption] Decryption failed:', error);
+    console.error('[encryption] This usually means wrong password or corrupted encrypted key');
     return null;
   }
 }
@@ -177,10 +184,21 @@ export async function storePrivateKey(userId: string, privateKey: string, passwo
  */
 export async function getPrivateKey(userId: string, password: string): Promise<string | null> {
   if (typeof window !== 'undefined') {
+    console.log('[encryption] Getting private key for user:', userId);
     const encryptedKey = localStorage.getItem(`lingo_pk_${userId}`);
-    if (!encryptedKey) return null;
+    if (!encryptedKey) {
+      console.error('[encryption] No encrypted private key found in localStorage');
+      return null;
+    }
 
-    return await decryptPrivateKey(encryptedKey, password);
+    console.log('[encryption] Found encrypted key, attempting to decrypt...');
+    const decrypted = await decryptPrivateKey(encryptedKey, password);
+    if (decrypted) {
+      console.log('[encryption] Private key decrypted successfully');
+    } else {
+      console.error('[encryption] Failed to decrypt private key - wrong password or corrupted key');
+    }
+    return decrypted;
   }
   return null;
 }
