@@ -91,16 +91,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
         }
       }
 
-      // Delete all messages sent by this user
-      console.log('[Sidebar] Deleting user messages...');
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      const messagesQuery = query(
-        collection(db, 'messages'),
-        where('senderId', '==', currentUser.id)
-      );
-      const messageSnapshot = await getDocs(messagesQuery);
-      const deletionPromises = messageSnapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deletionPromises);
+      // Note: We don't delete messages sent by this user because:
+      // 1. Firestore rules don't allow querying all messages by sender
+      // 2. Other users should still see the conversation history
+      // 3. Messages will just show as sent by a deleted user
+      console.log('[Sidebar] Skipping message deletion (preserving chat history)...');
 
       // Delete user document from Firestore
       console.log('[Sidebar] Deleting user document from Firestore...');
