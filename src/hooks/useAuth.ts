@@ -22,6 +22,12 @@ export function useAuth() {
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setCurrentUser(userDoc.data() as User);
+
+          // Restore password from sessionStorage if available
+          const storedPassword = sessionStorage.getItem(`lingo_session_${firebaseUser.uid}`);
+          if (storedPassword) {
+            setUserPassword(storedPassword);
+          }
         }
       } else {
         setCurrentUser(null);
@@ -54,8 +60,9 @@ export function useAuth() {
       // Store encrypted private key and get recovery code
       const recoveryCode = await storePrivateKey(user.uid, privateKey, password);
 
-      // Store password in memory for this session
+      // Store password in memory and sessionStorage for this session
       setUserPassword(password);
+      sessionStorage.setItem(`lingo_session_${user.uid}`, password);
       setCurrentUser(userData);
 
       return { success: true, recoveryCode };
@@ -70,8 +77,9 @@ export function useAuth() {
       const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
 
       if (userDoc.exists()) {
-        // Store password in memory for this session
+        // Store password in memory and sessionStorage for this session
         setUserPassword(password);
+        sessionStorage.setItem(`lingo_session_${userCredential.user.uid}`, password);
         setCurrentUser(userDoc.data() as User);
         return { success: true };
       }
@@ -86,6 +94,8 @@ export function useAuth() {
     try {
       if (auth.currentUser) {
         removePrivateKey(auth.currentUser.uid);
+        // Clear session password
+        sessionStorage.removeItem(`lingo_session_${auth.currentUser.uid}`);
       }
       await firebaseSignOut(auth);
       setCurrentUser(null);
