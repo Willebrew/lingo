@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useStore } from '@/store/useStore';
 import { Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import RecoveryCodeModal from './RecoveryCodeModal';
@@ -35,7 +36,9 @@ export default function AuthForm() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [loading, setLoading] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
+  const [pendingUserData, setPendingUserData] = useState<any>(null);
   const { signIn, signUp } = useAuth();
+  const { setCurrentUser } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,10 +52,12 @@ export default function AuthForm() {
         }
         const result = await signUp(email, password, displayName, preferredLanguage);
         if (result.success) {
-          toast.success('Account created successfully!');
-          // Show recovery code modal
-          if (result.recoveryCode) {
+          // Show recovery code modal - don't navigate away yet
+          if (result.recoveryCode && result.userData) {
             setRecoveryCode(result.recoveryCode);
+            setPendingUserData(result.userData);
+          } else {
+            toast.success('Account created successfully!');
           }
         } else {
           toast.error(result.error || 'Sign up failed');
@@ -192,7 +197,15 @@ export default function AuthForm() {
       {recoveryCode && (
         <RecoveryCodeModal
           recoveryCode={recoveryCode}
-          onConfirm={() => setRecoveryCode(null)}
+          onConfirm={() => {
+            setRecoveryCode(null);
+            // NOW set the current user to complete signup
+            if (pendingUserData) {
+              setCurrentUser(pendingUserData);
+              setPendingUserData(null);
+            }
+            toast.success('Account created successfully! Welcome to Lingo.');
+          }}
         />
       )}
     </div>
