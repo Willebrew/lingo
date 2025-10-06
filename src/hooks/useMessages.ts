@@ -10,7 +10,7 @@ import { encryptMessage, decryptMessage, getPrivateKey } from '@/utils/encryptio
 import type { Message, DecryptedMessage, Conversation } from '@/types';
 
 export function useMessages(conversationId: string | null) {
-  const { currentUser, messages, setMessages, addMessage } = useStore();
+  const { currentUser, userPassword, messages, setMessages, addMessage } = useStore();
   const [conversation, setConversation] = useState<Conversation | null>(null);
 
   useEffect(() => {
@@ -19,54 +19,62 @@ export function useMessages(conversationId: string | null) {
   }, [conversationId]);
 
   useEffect(() => {
-    if (!conversationId || !currentUser || !conversation) return;
+    if (!conversationId || !currentUser || !conversation || !userPassword) return;
 
-    const privateKey = getPrivateKey(currentUser.id);
-    if (!privateKey) return;
+    let unsubscribe: (() => void) | undefined;
 
-    const unsubscribe = subscribeToMessages(conversationId, (newMessages) => {
-      const decrypted: DecryptedMessage[] = newMessages
-        .map((msg) => {
-          const encryptedForMe = msg.encryptedContent[currentUser.id];
-          if (!encryptedForMe) return null;
+    const loadPrivateKey = async () => {
+      const privateKey = await getPrivateKey(currentUser.id, userPassword);
+      if (!privateKey) return;
 
-          // Get sender's public key from conversation details
-          const senderPublicKey = conversation.participantDetails[msg.senderId]?.publicKey;
-          if (!senderPublicKey) return null;
+      unsubscribe = subscribeToMessages(conversationId, (newMessages) => {
+        const decrypted: DecryptedMessage[] = newMessages
+          .map((msg) => {
+            const encryptedForMe = msg.encryptedContent[currentUser.id];
+            if (!encryptedForMe) return null;
 
-          const content = decryptMessage(
-            encryptedForMe,
-            senderPublicKey,
-            privateKey
-          );
+            // Get sender's public key from conversation details
+            const senderPublicKey = conversation.participantDetails[msg.senderId]?.publicKey;
+            if (!senderPublicKey) return null;
 
-          if (!content) return null;
+            const content = decryptMessage(
+              encryptedForMe,
+              senderPublicKey,
+              privateKey
+            );
 
-          return {
-            id: msg.id,
-            conversationId: msg.conversationId,
-            senderId: msg.senderId,
-            senderName: msg.senderName,
-            content,
-            timestamp: msg.timestamp,
-            translated: msg.translated,
-          };
-        })
-        .filter((msg): msg is DecryptedMessage => msg !== null);
+            if (!content) return null;
 
-      setMessages(conversationId, decrypted);
-    });
+            return {
+              id: msg.id,
+              conversationId: msg.conversationId,
+              senderId: msg.senderId,
+              senderName: msg.senderName,
+              content,
+              timestamp: msg.timestamp,
+              translated: msg.translated,
+            };
+          })
+          .filter((msg): msg is DecryptedMessage => msg !== null);
 
-    return () => unsubscribe();
-  }, [conversationId, currentUser, conversation, setMessages]);
+        setMessages(conversationId, decrypted);
+      });
+    };
+
+    loadPrivateKey();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [conversationId, currentUser, conversation, userPassword, setMessages]);
 
   const sendMessageToConversation = async (
     content: string,
     conversation: any
   ) => {
-    if (!currentUser || !conversationId) return;
+    if (!currentUser || !conversationId || !userPassword) return;
 
-    const privateKey = getPrivateKey(currentUser.id);
+    const privateKey = await getPrivateKey(currentUser.id, userPassword);
     if (!privateKey) return;
 
     // Encrypt message for all participants

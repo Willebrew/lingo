@@ -14,7 +14,7 @@ import { generateKeyPair, storePrivateKey, removePrivateKey } from '@/utils/encr
 import type { User } from '@/types';
 
 export function useAuth() {
-  const { setCurrentUser } = useStore();
+  const { setCurrentUser, setUserPassword } = useStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -25,11 +25,12 @@ export function useAuth() {
         }
       } else {
         setCurrentUser(null);
+        setUserPassword(null);
       }
     });
 
     return () => unsubscribe();
-  }, [setCurrentUser]);
+  }, [setCurrentUser, setUserPassword]);
 
   const signUp = async (email: string, password: string, displayName: string) => {
     try {
@@ -50,10 +51,14 @@ export function useAuth() {
 
       await setDoc(doc(db, 'users', user.uid), userData);
 
-      storePrivateKey(user.uid, privateKey);
+      // Store encrypted private key and get recovery code
+      const recoveryCode = await storePrivateKey(user.uid, privateKey, password);
+
+      // Store password in memory for this session
+      setUserPassword(password);
       setCurrentUser(userData);
 
-      return { success: true };
+      return { success: true, recoveryCode };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
@@ -65,6 +70,8 @@ export function useAuth() {
       const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
 
       if (userDoc.exists()) {
+        // Store password in memory for this session
+        setUserPassword(password);
         setCurrentUser(userDoc.data() as User);
         return { success: true };
       }
@@ -82,6 +89,7 @@ export function useAuth() {
       }
       await firebaseSignOut(auth);
       setCurrentUser(null);
+      setUserPassword(null);
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };

@@ -17,10 +17,12 @@ service cloud.firestore {
                        request.auth.uid in resource.data.participants;
     }
 
-    // Messages collection - authenticated users can read and create
+    // Messages collection - ONLY participants of the conversation can read messages
     match /messages/{messageId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow read: if request.auth != null &&
+                     request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
+      allow create: if request.auth != null &&
+                       request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants;
     }
   }
 }

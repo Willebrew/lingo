@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { MessageSquare, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import RecoveryCodeModal from './RecoveryCodeModal';
 
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -12,6 +13,7 @@ export default function AuthForm() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,6 +29,10 @@ export default function AuthForm() {
         const result = await signUp(email, password, displayName);
         if (result.success) {
           toast.success('Account created successfully!');
+          // Show recovery code modal
+          if (result.recoveryCode) {
+            setRecoveryCode(result.recoveryCode);
+          }
         } else {
           toast.error(result.error || 'Sign up failed');
         }
@@ -134,6 +140,14 @@ export default function AuthForm() {
           </div>
         </div>
       </motion.div>
+
+      {/* Recovery Code Modal */}
+      {recoveryCode && (
+        <RecoveryCodeModal
+          recoveryCode={recoveryCode}
+          onClose={() => setRecoveryCode(null)}
+        />
+      )}
     </div>
   );
 }

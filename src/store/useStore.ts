@@ -6,6 +6,10 @@ interface AppState {
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
 
+  // Password state (for key encryption)
+  userPassword: string | null;
+  setUserPassword: (password: string | null) => void;
+
   // Conversations
   conversations: Conversation[];
   setConversations: (conversations: Conversation[]) => void;
@@ -34,6 +38,10 @@ export const useStore = create<AppState>((set) => ({
   // User state
   currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user }),
+
+  // Password state
+  userPassword: null,
+  setUserPassword: (password) => set({ userPassword: password }),
 
   // Conversations
   conversations: [],

@@ -15,6 +15,83 @@ export function generateKeyPair(): EncryptionKeys {
 }
 
 /**
+ * Derive encryption key from password using PBKDF2
+ */
+async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  const encoder = new TextEncoder();
+  const passwordKey = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits', 'deriveKey']
+  );
+
+  return await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    passwordKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+/**
+ * Encrypt private key with password before storage
+ */
+async function encryptPrivateKey(privateKey: string, password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKeyFromPassword(password, salt);
+
+  const encoder = new TextEncoder();
+  const encryptedData = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: iv },
+    key,
+    encoder.encode(privateKey)
+  );
+
+  // Combine salt + iv + encrypted data
+  const combined = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
+  combined.set(salt, 0);
+  combined.set(iv, salt.length);
+  combined.set(new Uint8Array(encryptedData), salt.length + iv.length);
+
+  return naclUtil.encodeBase64(combined);
+}
+
+/**
+ * Decrypt private key with password
+ */
+async function decryptPrivateKey(encryptedPrivateKey: string, password: string): Promise<string | null> {
+  try {
+    const combined = naclUtil.decodeBase64(encryptedPrivateKey);
+    const salt = combined.slice(0, 16);
+    const iv = combined.slice(16, 28);
+    const data = combined.slice(28);
+
+    const key = await deriveKeyFromPassword(password, salt);
+
+    const decryptedData = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv },
+      key,
+      data
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decryptedData);
+  } catch (error) {
+    console.error('Failed to decrypt private key:', error);
+    return null;
+  }
+}
+
+/**
  * Encrypt a message for a specific recipient
  */
 export function encryptMessage(
@@ -76,22 +153,69 @@ export function decryptMessage(
 }
 
 /**
- * Store private key securely in localStorage
+ * Store private key securely in localStorage (encrypted with password)
+ * Returns recovery code that user MUST save
  */
-export function storePrivateKey(userId: string, privateKey: string): void {
+export async function storePrivateKey(userId: string, privateKey: string, password: string): Promise<string> {
   if (typeof window !== 'undefined') {
-    localStorage.setItem(`lingo_pk_${userId}`, privateKey);
+    const encryptedKey = await encryptPrivateKey(privateKey, password);
+    localStorage.setItem(`lingo_pk_${userId}`, encryptedKey);
+
+    // Store backup recovery code (encrypted)
+    const recoveryCode = generateRecoveryCode();
+    const encryptedRecovery = await encryptPrivateKey(privateKey, recoveryCode);
+    localStorage.setItem(`lingo_recovery_${userId}`, encryptedRecovery);
+
+    // Return recovery code to user (they must save it!)
+    return recoveryCode;
   }
+  return '';
 }
 
 /**
- * Retrieve private key from localStorage
+ * Retrieve and decrypt private key from localStorage
  */
-export function getPrivateKey(userId: string): string | null {
+export async function getPrivateKey(userId: string, password: string): Promise<string | null> {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem(`lingo_pk_${userId}`);
+    const encryptedKey = localStorage.getItem(`lingo_pk_${userId}`);
+    if (!encryptedKey) return null;
+
+    return await decryptPrivateKey(encryptedKey, password);
   }
   return null;
+}
+
+/**
+ * Recover private key using recovery code
+ */
+export async function recoverPrivateKey(userId: string, recoveryCode: string): Promise<string | null> {
+  if (typeof window !== 'undefined') {
+    const encryptedRecovery = localStorage.getItem(`lingo_recovery_${userId}`);
+    if (!encryptedRecovery) return null;
+
+    return await decryptPrivateKey(encryptedRecovery, recoveryCode);
+  }
+  return null;
+}
+
+/**
+ * Generate a random recovery code
+ */
+function generateRecoveryCode(): string {
+  const words: string[] = [];
+  const wordList = [
+    'alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot', 'golf', 'hotel',
+    'india', 'juliet', 'kilo', 'lima', 'mike', 'november', 'oscar', 'papa',
+    'quebec', 'romeo', 'sierra', 'tango', 'uniform', 'victor', 'whiskey', 'xray',
+    'yankee', 'zulu', 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
+    'eight', 'nine'
+  ];
+
+  for (let i = 0; i < 6; i++) {
+    words.push(wordList[Math.floor(Math.random() * wordList.length)]);
+  }
+
+  return words.join('-');
 }
 
 /**
@@ -100,5 +224,15 @@ export function getPrivateKey(userId: string): string | null {
 export function removePrivateKey(userId: string): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(`lingo_pk_${userId}`);
+    localStorage.removeItem(`lingo_recovery_${userId}`);
   }
+}
+
+/**
+ * Generate key fingerprint for verification
+ */
+export function generateKeyFingerprint(publicKey: string): string {
+  const hash = nacl.hash(naclUtil.decodeBase64(publicKey));
+  const fingerprint = naclUtil.encodeBase64(hash.slice(0, 8));
+  return fingerprint.slice(0, 12).toUpperCase();
 }
