@@ -7,16 +7,19 @@ import { useMessages } from '@/hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
 import { Send, Lock, Trash2, MoreVertical, Menu } from 'lucide-react';
 import MessageBubble from './MessageBubble';
+import KeyRecoveryModal from './KeyRecoveryModal';
 import { getConversation } from '@/lib/db';
+import { getPrivateKey } from '@/utils/encryption';
 import type { Conversation } from '@/types';
 import toast from 'react-hot-toast';
 
 export default function ChatView() {
-  const { selectedConversationId, currentUser } = useStore();
+  const { selectedConversationId, currentUser, userPassword } = useStore();
   const [messageText, setMessageText] = useState('');
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showKeyRecovery, setShowKeyRecovery] = useState(false);
   const { messages, sendMessageToConversation } = useMessages(selectedConversationId);
   const { deleteConversation } = useConversations();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -28,6 +31,19 @@ export default function ChatView() {
       setConversation(null);
     }
   }, [selectedConversationId]);
+
+  // Check if private key exists
+  useEffect(() => {
+    const checkPrivateKey = async () => {
+      if (currentUser && userPassword) {
+        const privateKey = await getPrivateKey(currentUser.id, userPassword);
+        if (!privateKey) {
+          setShowKeyRecovery(true);
+        }
+      }
+    };
+    checkPrivateKey();
+  }, [currentUser, userPassword]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -165,6 +181,16 @@ export default function ChatView() {
           </button>
         </form>
       </div>
+
+      {/* Key Recovery Modal */}
+      {showKeyRecovery && (
+        <KeyRecoveryModal
+          onSuccess={() => {
+            setShowKeyRecovery(false);
+            toast.success('Encryption keys restored! You can now send messages.');
+          }}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
