@@ -8,11 +8,31 @@ import toast from 'react-hot-toast';
 import RecoveryCodeModal from './RecoveryCodeModal';
 import Image from 'next/image';
 
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish (Español)' },
+  { code: 'fr', name: 'French (Français)' },
+  { code: 'de', name: 'German (Deutsch)' },
+  { code: 'it', name: 'Italian (Italiano)' },
+  { code: 'pt', name: 'Portuguese (Português)' },
+  { code: 'ru', name: 'Russian (Русский)' },
+  { code: 'zh', name: 'Chinese (中文)' },
+  { code: 'ja', name: 'Japanese (日本語)' },
+  { code: 'ko', name: 'Korean (한국어)' },
+  { code: 'ar', name: 'Arabic (العربية)' },
+  { code: 'hi', name: 'Hindi (हिन्दी)' },
+  { code: 'sv', name: 'Swedish (Svenska)' },
+  { code: 'no', name: 'Norwegian (Norsk)' },
+  { code: 'da', name: 'Danish (Dansk)' },
+  { code: 'fi', name: 'Finnish (Suomi)' },
+];
+
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [loading, setLoading] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
@@ -27,7 +47,7 @@ export default function AuthForm() {
           toast.error('Please enter a display name');
           return;
         }
-        const result = await signUp(email, password, displayName);
+        const result = await signUp(email, password, displayName, preferredLanguage);
         if (result.success) {
           toast.success('Account created successfully!');
           // Show recovery code modal
@@ -84,18 +104,40 @@ export default function AuthForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Display Name
-                </label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
-                  required={isSignUp}
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
+                    required={isSignUp}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Preferred Language
+                  </label>
+                  <select
+                    value={preferredLanguage}
+                    onChange={(e) => setPreferredLanguage(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
+                  >
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Messages will be auto-translated to this language
+                  </p>
+                </div>
+              </>
             )}
 
             <div>
@@ -150,7 +192,7 @@ export default function AuthForm() {
       {recoveryCode && (
         <RecoveryCodeModal
           recoveryCode={recoveryCode}
-          onClose={() => setRecoveryCode(null)}
+          onConfirm={() => setRecoveryCode(null)}
         />
       )}
     </div>

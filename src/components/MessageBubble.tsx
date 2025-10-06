@@ -20,9 +20,13 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
   const [showWarning, setShowWarning] = useState(false);
   const [targetLang, setTargetLang] = useState('');
   const { translateMessage } = useMessages(message.conversationId);
-  const { selectedConversationId } = useStore();
+  const { selectedConversationId, currentUser } = useStore();
 
   const handleTranslateClick = () => {
+    // Auto-set target language to user's preferred language
+    if (currentUser?.preferredLanguage) {
+      setTargetLang(currentUser.preferredLanguage);
+    }
     setShowWarning(true);
   };
 
@@ -35,17 +39,19 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
   };
 
   const languages = [
-    { code: 'Spanish', name: 'Spanish' },
-    { code: 'French', name: 'French' },
-    { code: 'German', name: 'German' },
-    { code: 'Italian', name: 'Italian' },
-    { code: 'Portuguese', name: 'Portuguese' },
-    { code: 'Russian', name: 'Russian' },
-    { code: 'Japanese', name: 'Japanese' },
-    { code: 'Korean', name: 'Korean' },
-    { code: 'Chinese', name: 'Chinese' },
-    { code: 'Arabic', name: 'Arabic' },
-    { code: 'Hindi', name: 'Hindi' },
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Spanish (Español)' },
+    { code: 'fr', name: 'French (Français)' },
+    { code: 'de', name: 'German (Deutsch)' },
+    { code: 'it', name: 'Italian (Italiano)' },
+    { code: 'pt', name: 'Portuguese (Português)' },
+    { code: 'ru', name: 'Russian (Русский)' },
+    { code: 'zh', name: 'Chinese (中文)' },
+    { code: 'ja', name: 'Japanese (日本語)' },
+    { code: 'ko', name: 'Korean (한국어)' },
+    { code: 'ar', name: 'Arabic (العربية)' },
+    { code: 'hi', name: 'Hindi (हिन्दी)' },
+    { code: 'sv', name: 'Swedish (Svenska)' },
   ];
 
   return (
@@ -130,21 +136,28 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                       To translate this message, its decrypted content will be sent to our server and the Claude AI API. This means the message will temporarily leave the encrypted channel.
                     </p>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Select a language to proceed:
-                  </p>
-                  <select
-                    value={targetLang}
-                    onChange={(e) => setTargetLang(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg mb-4 focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                  >
-                    <option value="">Select language</option>
-                    {languages.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      Translate to:
+                      {currentUser?.preferredLanguage && (
+                        <span className="ml-2 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded">
+                          Your preferred language
+                        </span>
+                      )}
+                    </p>
+                    <select
+                      value={targetLang}
+                      onChange={(e) => setTargetLang(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                    >
+                      <option value="">Select language</option>
+                      {languages.map((lang) => (
+                        <option key={lang.code} value={lang.code}>
+                          {lang.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex gap-3">
                     <button
                       onClick={() => setShowWarning(false)}

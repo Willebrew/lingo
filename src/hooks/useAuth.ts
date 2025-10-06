@@ -46,7 +46,7 @@ export function useAuth() {
     return () => unsubscribe();
   }, [setCurrentUser, setUserPassword]);
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (email: string, password: string, displayName: string, preferredLanguage: string = 'en') => {
     try {
       const { publicKey, privateKey } = generateKeyPair();
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -59,6 +59,7 @@ export function useAuth() {
         email: user.email!,
         displayName,
         publicKey,
+        preferredLanguage,
         createdAt: Date.now(),
         lastSeen: Date.now(),
       };

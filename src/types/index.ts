@@ -3,6 +3,7 @@ export interface User {
   email: string;
   displayName: string;
   publicKey: string;
+  preferredLanguage?: string; // ISO 639-1 language code (e.g., 'en', 'es', 'sv')
   createdAt: number;
   lastSeen: number;
 }

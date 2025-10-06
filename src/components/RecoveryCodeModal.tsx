@@ -1,95 +1,146 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Download, AlertTriangle } from 'lucide-react';
+import { Key, Download, Copy, CheckCircle, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface RecoveryCodeModalProps {
   recoveryCode: string;
-  onClose: () => void;
+  onConfirm: () => void;
 }
 
-export default function RecoveryCodeModal({ recoveryCode, onClose }: RecoveryCodeModalProps) {
-  const copyToClipboard = () => {
+export default function RecoveryCodeModal({ recoveryCode, onConfirm }: RecoveryCodeModalProps) {
+  const [copied, setCopied] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+
+  const handleCopy = () => {
     navigator.clipboard.writeText(recoveryCode);
-    toast.success('Recovery code copied to clipboard!');
+    setCopied(true);
+    toast.success('Recovery code copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadCode = () => {
-    const element = document.createElement('a');
-    const file = new Blob(
-      [`Lingo Recovery Code\n\nIMPORTANT: Save this code securely!\n\nRecovery Code: ${recoveryCode}\n\nYou will need this code to recover your account if you forget your password or lose access to your device.`],
+  const handleDownload = () => {
+    const blob = new Blob(
+      [
+        'Lingo Recovery Code\n' +
+        '===================\n\n' +
+        'Recovery Code: ' + recoveryCode + '\n\n' +
+        'IMPORTANT: Keep this code safe and secure!\n' +
+        '- You need this code to recover your account if you lose access\n' +
+        '- Without this code, you cannot decrypt your messages\n' +
+        '- Lingo cannot recover this code for you\n' +
+        '- Store it in a secure password manager or safe location\n\n' +
+        'Generated: ' + new Date().toLocaleString() + '\n'
+      ],
       { type: 'text/plain' }
     );
-    element.href = URL.createObjectURL(file);
-    element.download = 'lingo-recovery-code.txt';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    toast.success('Recovery code downloaded!');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'lingo-recovery-code-' + Date.now() + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setDownloaded(true);
+    toast.success('Recovery code downloaded');
   };
 
+  const canProceed = (copied || downloaded) && confirmed;
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl"
       >
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+            <Key className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">Save Your Recovery Code</h2>
+            <h3 className="text-xl font-bold">Save Your Recovery Code</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Critical: You&apos;ll need this to recover your account
+              Critical - Required to recover your account
             </p>
           </div>
         </div>
 
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-          <p className="text-sm text-red-800 dark:text-red-200">
-            <strong>⚠️ Important:</strong> If you forget your password AND lose this recovery
-            code, you will permanently lose access to your encrypted messages. There is no way to
-            recover them.
-          </p>
+          <div className="flex gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-red-800 dark:text-red-200 font-semibold mb-1">
+                ⚠️ CRITICAL: You must save this code NOW!
+              </p>
+              <ul className="text-xs text-red-700 dark:text-red-300 space-y-1 ml-4 list-disc">
+                <li>You need this code to recover your account</li>
+                <li>Without it, you&apos;ll lose access to all your messages forever</li>
+                <li>Lingo cannot recover this code for you - it&apos;s only stored on your device</li>
+                <li>This is the ONLY time you&apos;ll see this code</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your Recovery Code:</p>
-          <code className="text-lg font-mono font-bold block text-center break-all">
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Your Recovery Code:</label>
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 font-mono text-lg text-center select-all border-2 border-primary-500">
             {recoveryCode}
-          </code>
+          </div>
         </div>
 
-        <div className="flex gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <button
-            onClick={copyToClipboard}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            onClick={handleCopy}
+            className={'flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all ' + (copied ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600')}
           >
-            <Copy className="w-4 h-4" />
-            Copy
+            {copied ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+            {copied ? 'Copied!' : 'Copy Code'}
           </button>
+
           <button
-            onClick={downloadCode}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            onClick={handleDownload}
+            className={'flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all ' + (downloaded ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600')}
           >
-            <Download className="w-4 h-4" />
-            Download
+            {downloaded ? <CheckCircle className="w-5 h-5" /> : <Download className="w-5 h-5" />}
+            {downloaded ? 'Downloaded!' : 'Download'}
           </button>
+        </div>
+
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(e) => setConfirmed(e.target.checked)}
+              className="mt-1 w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-500"
+            />
+            <span className="text-sm text-yellow-800 dark:text-yellow-200 flex-1">
+              <strong>I understand</strong> that I must save this recovery code. If I lose it, I will
+              permanently lose access to my encrypted messages and there is no way to recover them.
+            </span>
+          </label>
         </div>
 
         <button
-          onClick={onClose}
-          className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 rounded-lg transition-colors"
+          onClick={onConfirm}
+          disabled={!canProceed}
+          className={'w-full px-4 py-3 rounded-lg font-semibold transition-all ' + (canProceed ? 'bg-primary-500 hover:bg-primary-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed')}
         >
-          I&apos;ve Saved My Recovery Code
+          I&apos;ve Saved My Recovery Code - Continue
         </button>
 
-        <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
-          Store this code in a secure password manager or write it down and keep it in a safe place
-        </p>
+        {!canProceed && (
+          <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
+            {!(copied || downloaded) && 'Please copy or download your recovery code'}
+            {(copied || downloaded) && !confirmed && 'Please confirm you understand the importance'}
+          </p>
+        )}
       </motion.div>
     </div>
   );
