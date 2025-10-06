@@ -50,9 +50,9 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: index * 0.03 }}
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
     >
       <div className={`relative group max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
@@ -70,12 +70,11 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
               </span>
             )}
 
-            <motion.div
-              whileHover={{ scale: 1.01 }}
-              className={`relative px-4 py-2 rounded-2xl shadow-lg ${
+            <div
+              className={`relative px-4 py-2.5 rounded-2xl ${
                 isOwn
-                  ? 'bg-primary-500 text-white rounded-br-sm'
-                  : 'glass text-gray-900 dark:text-white rounded-bl-sm'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
               }`}
             >
               <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
@@ -90,7 +89,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
               {/* Message menu */}
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 glass-button hover:bg-white/40 dark:hover:bg-gray-600/40"
+                className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -101,29 +100,29 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                   animate={{ opacity: 1, scale: 1 }}
                   className={`absolute ${
                     isOwn ? 'right-0' : 'left-0'
-                  } top-full mt-1 glass-card shadow-2xl p-2 z-10 min-w-[150px]`}
+                  } top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-2 z-10 min-w-[150px]`}
                 >
                   <button
                     onClick={handleTranslateClick}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-white/40 dark:hover:bg-gray-600/40 rounded-2xl text-sm transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors"
                   >
                     <Languages className="w-4 h-4" />
                     Translate
                   </button>
                 </motion.div>
               )}
-            </motion.div>
+            </div>
 
             {/* Translation Warning Dialog */}
             {showWarning && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="glass-card p-6 max-w-md w-full"
+                  className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
                 >
                   <h3 className="text-lg font-bold mb-3">⚠️ Security Warning</h3>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-4 mb-4">
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
                     <p className="text-sm text-yellow-800 dark:text-yellow-200">
                       <strong>Translation breaks end-to-end encryption!</strong>
                     </p>
@@ -137,7 +136,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                   <select
                     value={targetLang}
                     onChange={(e) => setTargetLang(e.target.value)}
-                    className="w-full px-3 py-2 glass-button border-0 rounded-2xl mb-4 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg mb-4 focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   >
                     <option value="">Select language</option>
                     {languages.map((lang) => (
@@ -149,14 +148,14 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                   <div className="flex gap-3">
                     <button
                       onClick={() => setShowWarning(false)}
-                      className="flex-1 px-4 py-2 glass-button hover:bg-white/40 dark:hover:bg-gray-700/40 transition-colors"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleTranslate}
                       disabled={!targetLang}
-                      className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+                      className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       I Understand, Translate
                     </button>

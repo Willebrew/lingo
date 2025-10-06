@@ -7,21 +7,26 @@ import ChatView from './ChatView';
 import { Menu } from 'lucide-react';
 
 export default function ChatLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-screen flex overflow-hidden bg-white dark:bg-gray-900">
+      {/* Desktop Sidebar - Always visible on desktop */}
+      <div className="hidden lg:block w-80 border-r border-gray-200 dark:border-gray-800">
+        <Sidebar onClose={() => {}} />
+      </div>
+
       {/* Mobile menu button */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed bottom-6 right-6 z-50 p-3 glass-card shadow-2xl"
+        className="lg:hidden fixed bottom-6 right-6 z-50 p-3 bg-primary-500 text-white rounded-full shadow-2xl"
       >
         <Menu className="w-6 h-6" />
       </motion.button>
 
-      {/* Sidebar */}
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
@@ -31,7 +36,7 @@ export default function ChatLayout() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+              className="lg:hidden fixed inset-0 bg-black/50 z-40"
             />
 
             {/* Sidebar */}
@@ -40,7 +45,7 @@ export default function ChatLayout() {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: 'spring', damping: 25 }}
-              className="fixed lg:relative inset-y-0 left-0 z-40 lg:z-0 w-80"
+              className="lg:hidden fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-gray-900"
             >
               <Sidebar onClose={() => setSidebarOpen(false)} />
             </motion.div>
