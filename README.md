@@ -23,7 +23,7 @@ A modern, secure messaging application with built-in AI-powered translation. Mes
 ### 1. Clone and Install
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Willebrew/lingo
 cd lingo
 npm install
 ```
