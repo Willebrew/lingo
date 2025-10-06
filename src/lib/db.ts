@@ -45,6 +45,8 @@ export async function createConversation(
     participants: participantIds,
     participantDetails,
     createdAt: Date.now(),
+    lastMessage: '',
+    lastMessageAt: Date.now(),
   };
 
   const docRef = await addDoc(collection(db, 'conversations'), conversationData);

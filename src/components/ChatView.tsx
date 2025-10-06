@@ -88,7 +88,7 @@ export default function ChatView() {
             </div>
             <div>
               <h2 className="font-semibold">{getOtherParticipantName()}</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                 <Lock className="w-3 h-3" />
                 End-to-end encrypted
               </p>

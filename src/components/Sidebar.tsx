@@ -6,7 +6,7 @@ import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversations } from '@/hooks/useConversations';
 import { useTheme } from '@/hooks/useTheme';
-import { MessageSquare, Plus, Moon, Sun, LogOut, X, Users, User } from 'lucide-react';
+import { MessageSquare, Plus, Moon, Sun, LogOut, X, Users, User, Trash2, UserX } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import NewConversationModal from './NewConversationModal';
@@ -21,8 +21,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const { conversations } = useConversations();
   const { signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { deleteConversation } = useConversations();
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'contacts'>('messages');
+  const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
   const handleSignOut = async () => {
     const result = await signOut();
@@ -38,6 +41,42 @@ export default function Sidebar({ onClose }: SidebarProps) {
     return conv.participantDetails[otherParticipantId]?.displayName || 'Unknown';
   };
 
+  const handleDeleteConversation = async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletingConvId(convId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingConvId) return;
+    const result = await deleteConversation(deletingConvId);
+    if (result.success) {
+      toast.success('Conversation deleted');
+      setDeletingConvId(null);
+    } else {
+      toast.error('Failed to delete conversation');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser) return;
+
+    try {
+      // Delete all user's conversations
+      for (const conv of conversations) {
+        await deleteConversation(conv.id);
+      }
+
+      // Sign out (will clear local storage)
+      await signOut();
+
+      toast.success('Account deleted successfully');
+      setShowDeleteAccount(false);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account');
+    }
+  };
+
   return (
     <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
       {/* Header */}
@@ -47,8 +86,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <Image
               src="/logo.png"
               alt="Lingo"
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               className="rounded-lg"
             />
             <h1 className="text-xl font-bold">Lingo</h1>
@@ -76,6 +115,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <button
               onClick={toggleTheme}
               className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Toggle theme"
             >
               {theme === 'light' ? (
                 <Moon className="w-4 h-4" />
@@ -85,8 +125,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
             </button>
 
             <button
+              onClick={() => setShowDeleteAccount(true)}
+              className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors text-red-600 dark:text-red-400"
+              title="Delete account"
+            >
+              <UserX className="w-4 h-4" />
+            </button>
+
+            <button
               onClick={handleSignOut}
               className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Sign out"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -144,41 +193,48 @@ export default function Sidebar({ onClose }: SidebarProps) {
             ) : (
               <div className="px-2">
                 {conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => {
-                      setSelectedConversationId(conv.id);
-                      onClose?.();
-                    }}
-                    className={`w-full p-3 rounded-lg text-left transition-colors mb-1 ${
-                      selectedConversationId === conv.id
-                        ? 'bg-primary-50 dark:bg-primary-900/20'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                        {getOtherParticipantName(conv).charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold text-sm truncate">
-                            {getOtherParticipantName(conv)}
-                          </p>
-                          {conv.lastMessageAt && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                              {formatDistanceToNow(conv.lastMessageAt, { addSuffix: true }).replace('about ', '')}
-                            </span>
+                  <div key={conv.id} className="relative group">
+                    <button
+                      onClick={() => {
+                        setSelectedConversationId(conv.id);
+                        onClose?.();
+                      }}
+                      className={`w-full p-3 rounded-lg text-left transition-colors mb-1 ${
+                        selectedConversationId === conv.id
+                          ? 'bg-primary-50 dark:bg-primary-900/20'
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                          {getOtherParticipantName(conv).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-semibold text-sm truncate">
+                              {getOtherParticipantName(conv)}
+                            </p>
+                            {conv.lastMessageAt && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                {formatDistanceToNow(conv.lastMessageAt, { addSuffix: true }).replace('about ', '')}
+                              </span>
+                            )}
+                          </div>
+                          {conv.lastMessage && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {conv.lastMessage}
+                            </p>
                           )}
                         </div>
-                        {conv.lastMessage && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {conv.lastMessage}
-                          </p>
-                        )}
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteConversation(conv.id, e)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -197,6 +253,83 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* New Conversation Modal */}
       {showNewConversation && (
         <NewConversationModal onClose={() => setShowNewConversation(false)} />
+      )}
+
+      {/* Delete Conversation Confirmation */}
+      {deletingConvId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-bold">Delete Conversation?</h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              This will delete the conversation for all participants. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingConvId(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation */}
+      {showDeleteAccount && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+                <UserX className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Delete Account?</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">This action is permanent</p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                <strong>⚠️ Warning:</strong> This will permanently delete your account, all conversations, and encrypted messages. This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteAccount(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
