@@ -10,20 +10,27 @@ import ChatLayout from '@/components/ChatLayout';
 export default function Home() {
   const { currentUser } = useStore();
   const [mounted, setMounted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   useAuth();
   useTheme();
 
   useEffect(() => {
     setMounted(true);
-    // Give auth hook time to check for existing session
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
   }, []);
 
-  if (!mounted || isLoading) {
+  // Wait for auth to be checked before showing anything
+  useEffect(() => {
+    if (mounted) {
+      // Give Firebase auth time to restore session
+      const timer = setTimeout(() => {
+        setAuthChecked(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [mounted]);
+
+  // Show loading spinner while checking auth
+  if (!mounted || !authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-pulse">

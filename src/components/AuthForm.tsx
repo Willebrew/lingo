@@ -51,12 +51,21 @@ export default function AuthForm() {
           return;
         }
         const result = await signUp(email, password, displayName, preferredLanguage);
+        console.log('[AuthForm] Signup result:', {
+          success: result.success,
+          hasRecoveryCode: !!result.recoveryCode,
+          hasUserData: !!result.userData,
+          recoveryCode: result.recoveryCode
+        });
+
         if (result.success) {
           // Show recovery code modal - don't navigate away yet
           if (result.recoveryCode && result.userData) {
+            console.log('[AuthForm] Setting recovery code modal to show');
             setRecoveryCode(result.recoveryCode);
             setPendingUserData(result.userData);
           } else {
+            console.warn('[AuthForm] Missing recovery code or user data!');
             toast.success('Account created successfully!');
           }
         } else {

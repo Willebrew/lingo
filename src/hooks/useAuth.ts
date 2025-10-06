@@ -73,6 +73,8 @@ export function useAuth() {
       setUserPassword(password);
       sessionStorage.setItem(`lingo_session_${user.uid}`, password);
       console.log('[useAuth] Password stored in sessionStorage for user:', user.uid);
+      console.log('[useAuth] Recovery code generated:', recoveryCode);
+      console.log('[useAuth] User data prepared:', userData);
 
       // DON'T set current user yet - let the recovery code modal show first
       // The AuthForm will set the user after the modal is dismissed
