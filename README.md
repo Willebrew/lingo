@@ -143,25 +143,26 @@ service cloud.firestore {
 
 ### 5. Environment Variables
 
-Create a `.env.local` file in the root directory and **paste your Firebase config values**:
+Copy the example environment file and add your keys:
+
+```bash
+cp .env.example .env.local
+```
+
+Then edit `.env.local` and add your actual values:
 
 ```env
 # Firebase Configuration (from Step 2.4)
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXX
+NEXT_PUBLIC_FIREBASE_API_KEY=your-actual-api-key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
-NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:xxxxx
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 
 # Anthropic API Key (from Step 4)
 ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
 ```
-
-**Replace the values:**
-- Copy each value from the Firebase config you got in Step 2.4
-- Replace `your-project`, `123456789`, `xxxxx` with your actual values
-- Add your Anthropic API key from Step 4
 
 ### 6. Run Development Server
 
