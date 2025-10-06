@@ -19,14 +19,22 @@ export function useAuth() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        console.log('[useAuth] User authenticated:', firebaseUser.uid);
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setCurrentUser(userDoc.data() as User);
 
           // Restore password from sessionStorage if available
           const storedPassword = sessionStorage.getItem(`lingo_session_${firebaseUser.uid}`);
+          console.log('[useAuth] Restoring password from sessionStorage:', {
+            hasPassword: !!storedPassword,
+            userId: firebaseUser.uid
+          });
           if (storedPassword) {
             setUserPassword(storedPassword);
+            console.log('[useAuth] Password restored successfully');
+          } else {
+            console.warn('[useAuth] No password found in sessionStorage - user may need to sign in again');
           }
         }
       } else {
@@ -63,6 +71,7 @@ export function useAuth() {
       // Store password in memory and sessionStorage for this session
       setUserPassword(password);
       sessionStorage.setItem(`lingo_session_${user.uid}`, password);
+      console.log('[useAuth] Password stored in sessionStorage for user:', user.uid);
       setCurrentUser(userData);
 
       return { success: true, recoveryCode };
@@ -80,6 +89,7 @@ export function useAuth() {
         // Store password in memory and sessionStorage for this session
         setUserPassword(password);
         sessionStorage.setItem(`lingo_session_${userCredential.user.uid}`, password);
+        console.log('[useAuth] Sign-in successful, password stored for user:', userCredential.user.uid);
         setCurrentUser(userDoc.data() as User);
         return { success: true };
       }
