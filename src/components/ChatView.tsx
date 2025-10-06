@@ -4,16 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/useStore';
 import { useMessages } from '@/hooks/useMessages';
-import { Send, Lock } from 'lucide-react';
+import { useConversations } from '@/hooks/useConversations';
+import { Send, Lock, Trash2, MoreVertical } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import { getConversation } from '@/lib/db';
 import type { Conversation } from '@/types';
+import toast from 'react-hot-toast';
 
 export default function ChatView() {
   const { selectedConversationId, currentUser } = useStore();
   const [messageText, setMessageText] = useState('');
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const { messages, sendMessageToConversation } = useMessages(selectedConversationId);
+  const { deleteConversation } = useConversations();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,6 +49,18 @@ export default function ChatView() {
     return conversation.participantDetails[otherParticipantId!]?.displayName || 'Unknown';
   };
 
+  const handleDeleteConversation = async () => {
+    if (!selectedConversationId) return;
+
+    const result = await deleteConversation(selectedConversationId);
+    if (result.success) {
+      toast.success('Conversation deleted for all participants');
+      setShowDeleteConfirm(false);
+    } else {
+      toast.error('Failed to delete conversation');
+    }
+  };
+
   if (!selectedConversationId) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -64,16 +81,49 @@ export default function ChatView() {
     <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">
-            {getOtherParticipantName().charAt(0).toUpperCase()}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">
+              {getOtherParticipantName().charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2 className="font-semibold">{getOtherParticipantName()}</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                End-to-end encrypted
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold">{getOtherParticipantName()}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              End-to-end encrypted
-            </p>
+
+          {/* Menu button */}
+          <div className="relative">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </motion.button>
+
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-700 rounded-lg shadow-lg p-2 min-w-[180px] z-10"
+              >
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded text-sm"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Conversation
+                </button>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
@@ -114,6 +164,55 @@ export default function ChatView() {
           </motion.button>
         </form>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Delete Conversation?</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                <strong>⚠️ Warning:</strong> This will delete the conversation and all messages
+                <strong> for all participants</strong>. Everyone in this conversation will lose access to these messages.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleDeleteConversation}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Delete for Everyone
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

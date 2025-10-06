@@ -10,6 +10,7 @@ import {
   orderBy,
   onSnapshot,
   updateDoc,
+  deleteDoc,
   arrayUnion,
   Timestamp,
 } from 'firebase/firestore';
@@ -192,4 +193,36 @@ export async function findOrCreateConversation(
   };
 
   return await createConversation([currentUserId, otherUserId], participantDetails);
+}
+
+/**
+ * Delete a conversation and all its messages (for all participants)
+ */
+export async function deleteConversation(conversationId: string): Promise<void> {
+  try {
+    // Delete all messages in the conversation
+    const messagesRef = collection(db, 'messages');
+    const messagesQuery = query(messagesRef, where('conversationId', '==', conversationId));
+    const messagesSnapshot = await getDocs(messagesQuery);
+
+    // Delete all messages in batches
+    const batchSize = 500;
+    const batches: Promise<void>[] = [];
+
+    for (let i = 0; i < messagesSnapshot.docs.length; i += batchSize) {
+      const batch = messagesSnapshot.docs.slice(i, i + batchSize);
+      const batchPromise = Promise.all(
+        batch.map(doc => deleteDoc(doc.ref))
+      ).then(() => {});
+      batches.push(batchPromise);
+    }
+
+    await Promise.all(batches);
+
+    // Delete the conversation document
+    await deleteDoc(doc(db, 'conversations', conversationId));
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    throw error;
+  }
 }

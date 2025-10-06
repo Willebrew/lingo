@@ -51,23 +51,48 @@ npm install
 
 ### 2. Firebase Setup
 
+#### Step 2.1: Create Firebase Project
+
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project (or use an existing one)
-3. Enable **Firestore Database**:
-   - Go to Firestore Database
-   - Click "Create database"
-   - Start in **production mode**
-   - Choose your preferred location
-4. Enable **Authentication**:
-   - Go to Authentication
-   - Click "Get started"
-   - Enable "Email/Password" sign-in method
-5. Get your Firebase config:
-   - Go to Project Settings (gear icon)
-   - Scroll to "Your apps" section
-   - Click the web icon (`</>`)
-   - Register your app
-   - Copy the configuration object
+2. Click "Add project" and create a new project
+
+#### Step 2.2: Enable Firestore Database
+
+1. In your Firebase project, go to **Firestore Database** (left sidebar)
+2. Click "Create database"
+3. Select **"Start in production mode"**
+4. Choose your preferred location (closest to your users)
+5. Click "Enable"
+
+#### Step 2.3: Enable Authentication
+
+1. Go to **Authentication** (left sidebar)
+2. Click "Get started"
+3. Click on "Email/Password" provider
+4. Enable the first toggle (Email/Password)
+5. Click "Save"
+
+#### Step 2.4: Get Firebase Configuration
+
+1. Click the **gear icon** (⚙️) next to "Project Overview"
+2. Click "Project settings"
+3. Scroll down to "Your apps" section
+4. Click the **web icon** (`</>`) to add a web app
+5. Register your app with a nickname (e.g., "lingo-web")
+6. **Copy the `firebaseConfig` object** - you'll see something like:
+
+```javascript
+const firebaseConfig = {
+  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXX",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:xxxxx"
+};
+```
+
+7. **Keep this tab open** - you'll need these values for the next step!
 
 ### 3. Firestore Security Rules
 
@@ -112,20 +137,25 @@ service cloud.firestore {
 
 ### 5. Environment Variables
 
-Create a `.env.local` file in the root directory:
+Create a `.env.local` file in the root directory and **paste your Firebase config values**:
 
 ```env
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+# Firebase Configuration (from Step 2.4)
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXX
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:xxxxx
 
-# Anthropic API Key
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+# Anthropic API Key (from Step 4)
+ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
 ```
+
+**Replace the values:**
+- Copy each value from the Firebase config you got in Step 2.4
+- Replace `your-project`, `123456789`, `xxxxx` with your actual values
+- Add your Anthropic API key from Step 4
 
 ### 6. Run Development Server
 
@@ -134,6 +164,35 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 7. Create Firestore Indexes (IMPORTANT!)
+
+**When you first try to view conversations**, you'll see an error in the console with a link. This is normal!
+
+**To fix:**
+1. Look for an error message like: `The query requires an index. You can create it here: https://console.firebase.google.com/...`
+2. **Click that link** - it will open Firebase Console
+3. Click **"Create Index"**
+4. Wait 1-2 minutes for the index to build
+5. Refresh the page
+
+You'll need to do this **twice** (once for conversations, once for messages).
+
+**Alternative - Manual Index Creation:**
+
+Go to Firebase Console → Firestore → Indexes tab and create these:
+
+**Index 1 - Conversations:**
+- Collection ID: `conversations`
+- Fields to index:
+  - `participants` (Arrays)
+  - `lastMessageAt` (Descending)
+
+**Index 2 - Messages:**
+- Collection ID: `messages`
+- Fields to index:
+  - `conversationId` (Ascending)
+  - `timestamp` (Ascending)
 
 ### 7. Deploy to Vercel
 

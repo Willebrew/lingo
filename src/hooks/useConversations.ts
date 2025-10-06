@@ -4,10 +4,11 @@ import {
   subscribeToConversations,
   findOrCreateConversation,
   searchUsersByEmail,
+  deleteConversation as dbDeleteConversation,
 } from '@/lib/db';
 
 export function useConversations() {
-  const { currentUser, conversations, setConversations } = useStore();
+  const { currentUser, conversations, setConversations, setSelectedConversationId } = useStore();
 
   useEffect(() => {
     if (!currentUser) return;
@@ -42,8 +43,21 @@ export function useConversations() {
     }
   };
 
+  const deleteConversation = async (conversationId: string) => {
+    try {
+      await dbDeleteConversation(conversationId);
+      // Clear selected conversation if it was the deleted one
+      setSelectedConversationId(null);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to delete conversation:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   return {
     conversations,
     startConversation,
+    deleteConversation,
   };
 }

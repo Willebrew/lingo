@@ -199,7 +199,7 @@ export async function recoverPrivateKey(userId: string, recoveryCode: string): P
 }
 
 /**
- * Generate a random recovery code
+ * Generate a cryptographically secure random recovery code
  */
 function generateRecoveryCode(): string {
   const words: string[] = [];
@@ -211,8 +211,12 @@ function generateRecoveryCode(): string {
     'eight', 'nine'
   ];
 
+  // Use crypto.getRandomValues for cryptographic randomness
+  const randomValues = new Uint32Array(6);
+  crypto.getRandomValues(randomValues);
+
   for (let i = 0; i < 6; i++) {
-    words.push(wordList[Math.floor(Math.random() * wordList.length)]);
+    words.push(wordList[randomValues[i] % wordList.length]);
   }
 
   return words.join('-');
