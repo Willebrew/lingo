@@ -26,6 +26,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<'messages' | 'contacts'>('messages');
   const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSignOut = async () => {
     const result = await signOut();
@@ -61,19 +62,41 @@ export default function Sidebar({ onClose }: SidebarProps) {
     if (!currentUser) return;
 
     try {
+      setIsDeleting(true);
+
       // Delete all user's conversations
+      console.log('[Sidebar] Deleting conversations...');
       for (const conv of conversations) {
         await deleteConversation(conv.id);
       }
 
-      // Sign out (will clear local storage)
-      await signOut();
+      // Delete user document from Firestore
+      console.log('[Sidebar] Deleting user document from Firestore...');
+      const { auth, db } = await import('@/lib/firebase');
+      const { doc, deleteDoc } = await import('firebase/firestore');
+      const { deleteUser } = await import('firebase/auth');
+
+      await deleteDoc(doc(db, 'users', currentUser.id));
+
+      // Delete user from Firebase Auth
+      console.log('[Sidebar] Deleting user from Firebase Auth...');
+      if (auth.currentUser) {
+        await deleteUser(auth.currentUser);
+      }
 
       toast.success('Account deleted successfully');
       setShowDeleteAccount(false);
-    } catch (error) {
+      // User will be automatically signed out when auth user is deleted
+    } catch (error: any) {
       console.error('Error deleting account:', error);
-      toast.error('Failed to delete account');
+
+      // Handle re-authentication required error
+      if (error.code === 'auth/requires-recent-login') {
+        toast.error('Please sign out and sign back in, then try deleting your account again.');
+      } else {
+        toast.error('Failed to delete account: ' + (error.message || 'Unknown error'));
+      }
+      setIsDeleting(false);
     }
   };
 
@@ -323,9 +346,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Delete Account
+                {isDeleting ? 'Deleting...' : 'Delete Account'}
               </button>
             </div>
           </motion.div>
