@@ -4,13 +4,34 @@ A modern, secure messaging application with built-in AI-powered translation. Mes
 
 ## ✨ Features
 
-- 🔐 **End-to-End Encryption** - All messages are encrypted using NaCl encryption
-- 🌍 **AI Translation** - Translate messages to 10+ languages powered by Claude AI
+- 🔐 **End-to-End Encryption** - All messages encrypted using NaCl (Curve25519-XSalsa20-Poly1305)
+- 🔒 **Password-Encrypted Keys** - Private keys encrypted with PBKDF2 + AES-GCM before storage
+- 🔑 **Key Recovery System** - Automatic recovery codes for account backup
+- 🌍 **AI Translation** - Translate messages to 10+ languages powered by Claude AI (with E2E warning)
 - 🎨 **Beautiful UI** - Modern, responsive design with smooth animations
 - 🌓 **Dark Mode** - Automatic theme switching with system preference detection
 - ⚡ **Real-time Messaging** - Instant message delivery with Firebase Firestore
 - 📱 **Mobile Friendly** - Fully responsive design for all devices
-- 🔑 **Secure Authentication** - Firebase Authentication with email/password
+- 🛡️ **Secure Firestore Rules** - Messages readable only by conversation participants
+
+## 🔒 Security Features
+
+**Cryptographic Implementation:**
+- **Encryption:** NaCl `box` (Curve25519-XSalsa20-Poly1305)
+- **Key Derivation:** PBKDF2 with 100,000 iterations (SHA-256)
+- **Private Key Storage:** AES-GCM-256 encrypted with user password
+- **Recovery System:** 6-word recovery codes for key backup
+- **Key Fingerprints:** SHA-512 fingerprints for manual verification
+
+**Security Protections:**
+- ✅ Messages encrypted client-side before transmission
+- ✅ Private keys never sent to server (stored encrypted locally)
+- ✅ Firestore rules prevent unauthorized message access
+- ✅ Password-based key encryption mitigates XSS attacks
+- ✅ Recovery codes enable account restoration
+- ✅ Translation feature warns about E2E encryption break
+
+**See [SECURITY.md](SECURITY.md) for complete security documentation.**
 
 ## 🚀 Quick Start
 
