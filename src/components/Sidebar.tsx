@@ -97,15 +97,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
       // 3. Messages will just show as sent by a deleted user
       console.log('[Sidebar] Skipping message deletion (preserving chat history)...');
 
-      // Delete user document from Firestore
-      console.log('[Sidebar] Deleting user document from Firestore...');
-      await deleteDoc(doc(db, 'users', currentUser.id));
-
-      // Delete user from Firebase Auth
+      // Delete user from Firebase Auth FIRST
+      // Important: Do this before Firestore so if it fails (requires-recent-login),
+      // user can still sign back in and try again
       console.log('[Sidebar] Deleting user from Firebase Auth...');
       if (auth.currentUser) {
         await deleteUser(auth.currentUser);
       }
+
+      // Delete user document from Firestore
+      // Only do this after Auth deletion succeeds
+      console.log('[Sidebar] Deleting user document from Firestore...');
+      await deleteDoc(doc(db, 'users', currentUser.id));
 
       toast.success('Account deleted successfully');
       setShowDeleteAccount(false);
