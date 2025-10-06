@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/useStore';
 import { useMessages } from '@/hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
-import { Send, Lock, Trash2, MoreVertical } from 'lucide-react';
+import { Send, Lock, Trash2, MoreVertical, Menu } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import { getConversation } from '@/lib/db';
 import type { Conversation } from '@/types';
@@ -37,8 +37,13 @@ export default function ChatView() {
     e.preventDefault();
     if (!messageText.trim() || !conversation) return;
 
-    await sendMessageToConversation(messageText, conversation);
-    setMessageText('');
+    try {
+      await sendMessageToConversation(messageText, conversation);
+      setMessageText('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast.error('Failed to send message. Please try again.');
+    }
   };
 
   const getOtherParticipantName = () => {

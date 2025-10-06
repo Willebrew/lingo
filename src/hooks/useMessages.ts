@@ -72,29 +72,72 @@ export function useMessages(conversationId: string | null) {
     content: string,
     conversation: any
   ) => {
-    if (!currentUser || !conversationId || !userPassword) return;
+    console.log('[useMessages] Starting message send...', {
+      hasCurrentUser: !!currentUser,
+      hasConversationId: !!conversationId,
+      hasUserPassword: !!userPassword,
+      conversationId,
+      participants: conversation?.participants
+    });
 
-    const privateKey = await getPrivateKey(currentUser.id, userPassword);
-    if (!privateKey) return;
-
-    // Encrypt message for all participants
-    const encryptedContent: { [recipientId: string]: string } = {};
-
-    for (const participantId of conversation.participants) {
-      const participantPublicKey = conversation.participantDetails[participantId].publicKey;
-      encryptedContent[participantId] = encryptMessage(
-        content,
-        participantPublicKey,
-        privateKey
-      );
+    if (!currentUser || !conversationId || !userPassword) {
+      console.error('[useMessages] Missing required data:', {
+        hasCurrentUser: !!currentUser,
+        hasConversationId: !!conversationId,
+        hasUserPassword: !!userPassword
+      });
+      throw new Error('Missing required authentication data');
     }
 
-    await dbSendMessage(
-      conversationId,
-      currentUser.id,
-      currentUser.displayName,
-      encryptedContent
-    );
+    console.log('[useMessages] Getting private key...');
+    const privateKey = await getPrivateKey(currentUser.id, userPassword);
+    if (!privateKey) {
+      console.error('[useMessages] Failed to get private key');
+      throw new Error('Failed to decrypt private key');
+    }
+
+    try {
+      console.log('[useMessages] Encrypting message for participants:', conversation.participants);
+      // Encrypt message for all participants
+      const encryptedContent: { [recipientId: string]: string } = {};
+
+      for (const participantId of conversation.participants) {
+        const participantPublicKey = conversation.participantDetails[participantId]?.publicKey;
+        if (!participantPublicKey) {
+          console.error('[useMessages] Missing public key for participant:', participantId);
+          throw new Error(`Missing public key for participant ${participantId}`);
+        }
+        console.log(`[useMessages] Encrypting for participant ${participantId}...`);
+        encryptedContent[participantId] = encryptMessage(
+          content,
+          participantPublicKey,
+          privateKey
+        );
+      }
+
+      console.log('[useMessages] Sending to Firestore...', {
+        conversationId,
+        senderId: currentUser.id,
+        encryptedForParticipants: Object.keys(encryptedContent)
+      });
+
+      await dbSendMessage(
+        conversationId,
+        currentUser.id,
+        currentUser.displayName,
+        encryptedContent
+      );
+
+      console.log('[useMessages] Message sent successfully!');
+    } catch (error) {
+      console.error('[useMessages] Error sending message:', error);
+      console.error('[useMessages] Error details:', {
+        name: (error as Error).name,
+        message: (error as Error).message,
+        stack: (error as Error).stack
+      });
+      throw error;
+    }
   };
 
   const translateMessage = async (messageId: string, targetLanguage: string) => {

@@ -16,12 +16,12 @@ export default function ChatLayout() {
         <Sidebar onClose={() => {}} />
       </div>
 
-      {/* Mobile menu button */}
+      {/* Mobile menu button - Always visible on mobile */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed bottom-6 right-6 z-50 p-3 bg-primary-500 text-white rounded-full shadow-2xl"
+        className="lg:hidden fixed bottom-6 left-6 z-50 p-4 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-2xl"
       >
         <Menu className="w-6 h-6" />
       </motion.button>

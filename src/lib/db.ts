@@ -99,6 +99,13 @@ export async function sendMessage(
   senderName: string,
   encryptedContent: { [recipientId: string]: string }
 ): Promise<string> {
+  console.log('[db] Preparing message document...', {
+    conversationId,
+    senderId,
+    senderName,
+    encryptedForParticipants: Object.keys(encryptedContent)
+  });
+
   const messageData: Omit<Message, 'id'> = {
     conversationId,
     senderId,
@@ -107,15 +114,29 @@ export async function sendMessage(
     timestamp: Date.now(),
   };
 
-  const docRef = await addDoc(collection(db, 'messages'), messageData);
+  try {
+    console.log('[db] Adding message to Firestore...');
+    const docRef = await addDoc(collection(db, 'messages'), messageData);
+    console.log('[db] Message added successfully with ID:', docRef.id);
 
-  // Update conversation's last message info
-  await updateDoc(doc(db, 'conversations', conversationId), {
-    lastMessage: 'New message',
-    lastMessageAt: Date.now(),
-  });
+    // Update conversation's last message info
+    console.log('[db] Updating conversation lastMessage...');
+    await updateDoc(doc(db, 'conversations', conversationId), {
+      lastMessage: 'New message',
+      lastMessageAt: Date.now(),
+    });
+    console.log('[db] Conversation updated successfully');
 
-  return docRef.id;
+    return docRef.id;
+  } catch (error) {
+    console.error('[db] Failed to send message:', error);
+    console.error('[db] Error details:', {
+      name: (error as Error).name,
+      message: (error as Error).message,
+      code: (error as any).code
+    });
+    throw error;
+  }
 }
 
 export async function getMessages(conversationId: string): Promise<Message[]> {
