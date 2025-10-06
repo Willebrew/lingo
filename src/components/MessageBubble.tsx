@@ -72,10 +72,10 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
 
             <motion.div
               whileHover={{ scale: 1.01 }}
-              className={`relative px-4 py-2 rounded-2xl ${
+              className={`relative px-4 py-2 rounded-2xl shadow-lg ${
                 isOwn
                   ? 'bg-primary-500 text-white rounded-br-sm'
-                  : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm'
+                  : 'glass text-gray-900 dark:text-white rounded-bl-sm'
               }`}
             >
               <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
@@ -90,7 +90,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
               {/* Message menu */}
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 glass-button hover:bg-white/40 dark:hover:bg-gray-600/40"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -101,11 +101,11 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                   animate={{ opacity: 1, scale: 1 }}
                   className={`absolute ${
                     isOwn ? 'right-0' : 'left-0'
-                  } top-full mt-1 bg-white dark:bg-gray-700 rounded-lg shadow-lg p-2 z-10 min-w-[150px]`}
+                  } top-full mt-1 glass-card shadow-2xl p-2 z-10 min-w-[150px]`}
                 >
                   <button
                     onClick={handleTranslateClick}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded text-sm"
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-white/40 dark:hover:bg-gray-600/40 rounded-2xl text-sm transition-colors"
                   >
                     <Languages className="w-4 h-4" />
                     Translate
@@ -116,14 +116,14 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
 
             {/* Translation Warning Dialog */}
             {showWarning && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+                  className="glass-card p-6 max-w-md w-full"
                 >
                   <h3 className="text-lg font-bold mb-3">⚠️ Security Warning</h3>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-4 mb-4">
                     <p className="text-sm text-yellow-800 dark:text-yellow-200">
                       <strong>Translation breaks end-to-end encryption!</strong>
                     </p>
@@ -137,7 +137,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                   <select
                     value={targetLang}
                     onChange={(e) => setTargetLang(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-white dark:bg-gray-700"
+                    className="w-full px-3 py-2 glass-button border-0 rounded-2xl mb-4 focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   >
                     <option value="">Select language</option>
                     {languages.map((lang) => (
@@ -146,17 +146,17 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                       </option>
                     ))}
                   </select>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => setShowWarning(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="flex-1 px-4 py-2 glass-button hover:bg-white/40 dark:hover:bg-gray-700/40 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleTranslate}
                       disabled={!targetLang}
-                      className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
                     >
                       I Understand, Translate
                     </button>

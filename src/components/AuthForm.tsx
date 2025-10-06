@@ -56,7 +56,7 @@ export default function AuthForm() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
+        <div className="glass-card shadow-2xl p-8">
           <div className="text-center mb-8">
             <motion.div
               initial={{ scale: 0 }}
@@ -85,7 +85,7 @@ export default function AuthForm() {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 glass-button border-0 focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
                   required={isSignUp}
                 />
               </div>
@@ -99,7 +99,7 @@ export default function AuthForm() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 glass-button border-0 focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
                 required
               />
             </div>
@@ -112,7 +112,7 @@ export default function AuthForm() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 glass-button border-0 focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
                 required
               />
             </div>
@@ -122,7 +122,7 @@ export default function AuthForm() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 rounded-2xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
             </motion.button>

@@ -37,9 +37,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
   };
 
   return (
-    <div className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <div className="h-full glass-card border-r border-white/20 dark:border-gray-700/50 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-white/20 dark:border-gray-700/50">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-primary-500" />
@@ -63,7 +63,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleTheme}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 glass-button hover:bg-white/40 dark:hover:bg-gray-700/40 transition-colors"
             >
               {theme === 'light' ? (
                 <Moon className="w-5 h-5" />
@@ -76,7 +76,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={handleSignOut}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 glass-button hover:bg-white/40 dark:hover:bg-gray-700/40 transition-colors"
             >
               <LogOut className="w-5 h-5" />
             </motion.button>
@@ -90,7 +90,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowNewConversation(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl transition-colors shadow-lg"
         >
           <Plus className="w-5 h-5" />
           New Conversation
@@ -117,10 +117,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   setSelectedConversationId(conv.id);
                   onClose?.();
                 }}
-                className={`w-full p-3 rounded-lg text-left transition-colors ${
+                className={`w-full p-3 rounded-2xl text-left transition-colors ${
                   selectedConversationId === conv.id
-                    ? 'bg-primary-50 dark:bg-primary-900/20'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-primary-500/20 dark:bg-primary-500/30 backdrop-blur-sm'
+                    : 'hover:bg-white/40 dark:hover:bg-gray-700/40'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">

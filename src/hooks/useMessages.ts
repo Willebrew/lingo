@@ -28,7 +28,7 @@ export function useMessages(conversationId: string | null) {
       if (!privateKey) return;
 
       unsubscribe = subscribeToMessages(conversationId, (newMessages) => {
-        const decrypted: DecryptedMessage[] = newMessages
+        const decrypted = newMessages
           .map((msg) => {
             const encryptedForMe = msg.encryptedContent[currentUser.id];
             if (!encryptedForMe) return null;
@@ -52,7 +52,7 @@ export function useMessages(conversationId: string | null) {
               senderName: msg.senderName,
               content,
               timestamp: msg.timestamp,
-              translated: msg.translated,
+              ...(msg.translated !== undefined && { translated: msg.translated }),
             };
           })
           .filter((msg): msg is DecryptedMessage => msg !== null);

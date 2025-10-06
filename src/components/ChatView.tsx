@@ -78,9 +78,9 @@ export default function ChatView() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <div className="glass-card border-b border-white/20 dark:border-gray-700/50 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">
@@ -101,7 +101,7 @@ export default function ChatView() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 glass-button hover:bg-white/40 dark:hover:bg-gray-700/40 transition-colors"
             >
               <MoreVertical className="w-5 h-5" />
             </motion.button>
@@ -110,14 +110,14 @@ export default function ChatView() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-700 rounded-lg shadow-lg p-2 min-w-[180px] z-10"
+                className="absolute right-0 top-full mt-2 glass-card shadow-2xl p-2 min-w-[180px] z-10"
               >
                 <button
                   onClick={() => {
                     setShowDeleteConfirm(true);
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded text-sm"
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl text-sm transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Conversation
@@ -144,21 +144,21 @@ export default function ChatView() {
       </div>
 
       {/* Input */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-        <form onSubmit={handleSendMessage} className="flex gap-2">
+      <div className="glass-card border-t border-white/20 dark:border-gray-700/50 px-6 py-4">
+        <form onSubmit={handleSendMessage} className="flex gap-3">
           <input
             type="text"
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700"
+            className="flex-1 px-4 py-3 glass-button border-0 focus:ring-2 focus:ring-primary-500 focus:outline-none"
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
             disabled={!messageText.trim()}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
           >
             <Send className="w-5 h-5" />
           </motion.button>
@@ -167,11 +167,11 @@ export default function ChatView() {
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+            className="glass-card p-6 max-w-md w-full"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
@@ -185,19 +185,19 @@ export default function ChatView() {
               </div>
             </div>
 
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-4">
               <p className="text-sm text-red-800 dark:text-red-200">
                 <strong>⚠️ Warning:</strong> This will delete the conversation and all messages
                 <strong> for all participants</strong>. Everyone in this conversation will lose access to these messages.
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex-1 px-4 py-2 glass-button hover:bg-white/40 dark:hover:bg-gray-700/40 transition-colors"
               >
                 Cancel
               </motion.button>
@@ -205,7 +205,7 @@ export default function ChatView() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleDeleteConversation}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-2xl hover:bg-red-600 transition-colors shadow-lg"
               >
                 Delete for Everyone
               </motion.button>

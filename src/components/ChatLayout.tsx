@@ -12,12 +12,14 @@ export default function ChatLayout() {
   return (
     <div className="h-screen flex overflow-hidden">
       {/* Mobile menu button */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg"
+        className="lg:hidden fixed bottom-6 right-6 z-50 p-3 glass-card shadow-2xl"
       >
         <Menu className="w-6 h-6" />
-      </button>
+      </motion.button>
 
       {/* Sidebar */}
       <AnimatePresence>
@@ -29,7 +31,7 @@ export default function ChatLayout() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden fixed inset-0 bg-black/50 z-30"
+              className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
             />
 
             {/* Sidebar */}
