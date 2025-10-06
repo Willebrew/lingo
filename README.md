@@ -102,26 +102,32 @@ Set up these security rules in Firestore:
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection
+    // Users collection - users can read all users but only write their own data
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Conversations collection
+    // Conversations collection - only participants can access
     match /conversations/{conversationId} {
       allow read: if request.auth != null &&
-        request.auth.uid in resource.data.participants;
+                     request.auth.uid in resource.data.participants;
       allow create: if request.auth != null &&
-        request.auth.uid in request.resource.data.participants;
+                       request.auth.uid in request.resource.data.participants;
       allow update: if request.auth != null &&
-        request.auth.uid in resource.data.participants;
+                       request.auth.uid in resource.data.participants;
+      allow delete: if request.auth != null &&
+                       request.auth.uid in resource.data.participants;
     }
 
-    // Messages collection
+    // Messages collection - ONLY participants of the conversation can read/delete messages
     match /messages/{messageId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow read: if request.auth != null &&
+                     request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
+      allow create: if request.auth != null &&
+                       request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants;
+      allow delete: if request.auth != null &&
+                       request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
     }
   }
 }
