@@ -17,15 +17,21 @@ interface MessageBubbleProps {
 export default function MessageBubble({ message, isOwn, index }: MessageBubbleProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showTranslate, setShowTranslate] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
   const [targetLang, setTargetLang] = useState('');
   const { translateMessage } = useMessages(message.conversationId);
   const { selectedConversationId } = useStore();
+
+  const handleTranslateClick = () => {
+    setShowWarning(true);
+  };
 
   const handleTranslate = async () => {
     if (!targetLang) return;
     await translateMessage(message.id, targetLang);
     setShowTranslate(false);
     setShowMenu(false);
+    setShowWarning(false);
   };
 
   const languages = [
@@ -98,39 +104,66 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                   } top-full mt-1 bg-white dark:bg-gray-700 rounded-lg shadow-lg p-2 z-10 min-w-[150px]`}
                 >
                   <button
-                    onClick={() => setShowTranslate(!showTranslate)}
+                    onClick={handleTranslateClick}
                     className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded text-sm"
                   >
                     <Languages className="w-4 h-4" />
                     Translate
                   </button>
-
-                  {showTranslate && (
-                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                      <select
-                        value={targetLang}
-                        onChange={(e) => setTargetLang(e.target.value)}
-                        className="w-full px-2 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded mb-2"
-                      >
-                        <option value="">Select language</option>
-                        {languages.map((lang) => (
-                          <option key={lang.code} value={lang.code}>
-                            {lang.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        onClick={handleTranslate}
-                        disabled={!targetLang}
-                        className="w-full px-3 py-1 bg-primary-500 text-white rounded text-sm disabled:opacity-50"
-                      >
-                        Translate
-                      </button>
-                    </div>
-                  )}
                 </motion.div>
               )}
             </motion.div>
+
+            {/* Translation Warning Dialog */}
+            {showWarning && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+                >
+                  <h3 className="text-lg font-bold mb-3">⚠️ Security Warning</h3>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      <strong>Translation breaks end-to-end encryption!</strong>
+                    </p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-2">
+                      To translate this message, its decrypted content will be sent to our server and the Claude AI API. This means the message will temporarily leave the encrypted channel.
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Select a language to proceed:
+                  </p>
+                  <select
+                    value={targetLang}
+                    onChange={(e) => setTargetLang(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-white dark:bg-gray-700"
+                  >
+                    <option value="">Select language</option>
+                    {languages.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowWarning(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleTranslate}
+                      disabled={!targetLang}
+                      className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      I Understand, Translate
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
 
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 px-1">
               {format(message.timestamp, 'p')}
