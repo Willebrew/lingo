@@ -60,7 +60,7 @@ export default function ChatLayout() {
       {showKeyRecovery && (
         <KeyRecoveryModal onSuccess={() => setShowKeyRecovery(false)} />
       )}
-      <div className="relative min-h-screen overflow-hidden">
+      <div className="fixed inset-0 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-1/2 h-[130%] w-[135%] -translate-x-1/2 -translate-y-1/2 rounded-[120px] bg-white/18 blur-[180px]" />
         <div className="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full bg-primary-500/25 blur-[140px]" />
