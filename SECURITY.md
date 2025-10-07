@@ -40,16 +40,17 @@ Lingo implements end-to-end encryption (E2EE) for all messages using industry-st
 
 **Private Key Storage:**
 - Encrypted with user password using PBKDF2 + AES-GCM
-- PBKDF2: 100,000 iterations, SHA-256
-- AES-GCM: 256-bit key, 96-bit IV, authenticated encryption
+- PBKDF2: 600,000 iterations, SHA-256
+- AES-GCM: 256-bit derived key for encryption
 - Stored in localStorage (encrypted form only)
-- Session password kept in memory (Zustand store)
+- Session password stored in sessionStorage (cleared on tab close)
+- Private key ownership cryptographically verified on restore
 
 **Key Recovery:**
-- 6-word recovery code generated at signup
-- Recovery code encrypts backup copy of private key
-- Stored locally (encrypted with recovery code)
-- Users MUST save recovery code offline
+- Base64 recovery codes generated at signup
+- Contains the private key itself (for backup/restore)
+- Users MUST save recovery code offline securely
+- Required to restore access if password is forgotten
 
 ### Message Encryption
 
@@ -81,8 +82,9 @@ encryptedMessage = nacl.box(
 
 2. **Password-Encrypted Private Keys**
    - Private keys never stored in plaintext
-   - PBKDF2 key derivation (100k iterations)
+   - PBKDF2 key derivation (600k iterations)
    - AES-GCM authenticated encryption
+   - Cryptographic ownership verification on restore
    - Mitigates XSS key theft
 
 3. **Key Backup & Recovery**
@@ -141,10 +143,12 @@ encryptedMessage = nacl.box(
 - Firestore compromise could swap keys (MITM)
 - Mitigation: Key fingerprints (not yet in UI)
 
-**8. Session Password in Memory**
-- Password stored in Zustand during session
-- Accessible in browser memory
+**8. Session Password Storage**
+- Password stored in sessionStorage during session
+- Automatically cleared when browser tab closes
+- Accessible to JavaScript (XSS vulnerability)
 - Could be extracted by malicious extension
+- Enables page refresh without re-login
 
 ## Best Practices for Users
 
@@ -278,18 +282,11 @@ encryptedMessage = nacl.box(
 ## Reporting Security Issues
 
 **Found a vulnerability?**
-- Email: security@lingo.app (if available)
 - GitHub: Open a security advisory (private)
 - DO NOT publicly disclose until coordinated
 
-We appreciate responsible disclosure and will credit researchers.
-
-## Version History
-
-- **v1.1.0** (Current) - Password-encrypted keys, recovery codes, Firestore rules fix
-- **v1.0.0** - Initial E2EE implementation (insecure private key storage)
+We appreciate responsible disclosure.
 
 ---
 
-**Last Updated:** 2025
-**Security Contact:** See CONTRIBUTING.md
+**Last Updated:** October 2025
