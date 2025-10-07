@@ -5,43 +5,6 @@ import type { EncryptionKeys } from '@/types';
 // Cache for decrypted private keys to avoid expensive re-decryption
 const privateKeyCache = new Map<string, string>();
 
-const encryptionPasswordKey = (userId: string) => `lingo_pw_${userId}`;
-
-function clearPrivateKeyCacheForUser(userId: string) {
-  for (const cacheKey of privateKeyCache.keys()) {
-    if (cacheKey.startsWith(`${userId}:`)) {
-      privateKeyCache.delete(cacheKey);
-    }
-  }
-}
-
-function persistEncryptionPassword(userId: string, password: string) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(encryptionPasswordKey(userId), password);
-}
-
-export function getStoredEncryptionPassword(userId: string): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(encryptionPasswordKey(userId));
-}
-
-function resolveEncryptionPassword(userId: string, provided?: string): string {
-  if (provided && provided.trim().length > 0) {
-    persistEncryptionPassword(userId, provided);
-    return provided;
-  }
-
-  const existing = getStoredEncryptionPassword(userId);
-  if (existing) {
-    return existing;
-  }
-
-  const randomBytes = crypto.getRandomValues(new Uint8Array(16));
-  const generated = naclUtil.encodeBase64(randomBytes);
-  persistEncryptionPassword(userId, generated);
-  return generated;
-}
-
 /**
  * Generate a new encryption key pair for E2E encryption
  */
@@ -288,11 +251,9 @@ export function decryptMessage(
  * Store private key securely in localStorage (encrypted with password)
  * Returns the BASE64-ENCODED PRIVATE KEY that user MUST save
  */
-export async function storePrivateKey(userId: string, privateKey: string, password?: string): Promise<string> {
+export async function storePrivateKey(userId: string, privateKey: string, password: string): Promise<string> {
   if (typeof window !== 'undefined') {
-    const encryptionPassword = resolveEncryptionPassword(userId, password);
-    clearPrivateKeyCacheForUser(userId);
-    const encryptedKey = await encryptPrivateKey(privateKey, encryptionPassword);
+    const encryptedKey = await encryptPrivateKey(privateKey, password);
     localStorage.setItem(`lingo_pk_${userId}`, encryptedKey);
     return privateKey;
   }
@@ -301,10 +262,16 @@ export async function storePrivateKey(userId: string, privateKey: string, passwo
 
 /**
  * Retrieve and decrypt private key from localStorage
- * Tries multiple password sources for backward compatibility
  */
 export async function getPrivateKey(userId: string, password: string, silent: boolean = false): Promise<string | null> {
   if (typeof window !== 'undefined') {
+    // Check cache first
+    const cacheKey = `${userId}:${password}`;
+    const cached = privateKeyCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const encryptedKey = localStorage.getItem(`lingo_pk_${userId}`);
     if (!encryptedKey) {
       if (!silent) {
@@ -313,47 +280,17 @@ export async function getPrivateKey(userId: string, password: string, silent: bo
       return null;
     }
 
-    // Try passwords in priority order for backward compatibility
-    const passwordsToTry: string[] = [];
-
-    // 1. Try the stored encryption password first (new system)
-    const storedPassword = getStoredEncryptionPassword(userId);
-    if (storedPassword) {
-      passwordsToTry.push(storedPassword);
+    const decrypted = await decryptPrivateKey(encryptedKey, password);
+    if (!decrypted && !silent) {
+      console.error('[encryption] Failed to decrypt private key');
     }
 
-    // 2. Try the provided password (login password for legacy users)
-    if (password && password !== storedPassword) {
-      passwordsToTry.push(password);
+    // Store in cache if successful
+    if (decrypted) {
+      privateKeyCache.set(cacheKey, decrypted);
     }
 
-    // Try each password
-    for (const pwd of passwordsToTry) {
-      const cacheKey = `${userId}:${pwd}`;
-      const cached = privateKeyCache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      const decrypted = await decryptPrivateKey(encryptedKey, pwd);
-      if (decrypted) {
-        // Store in cache if successful
-        privateKeyCache.set(cacheKey, decrypted);
-
-        // If we succeeded with the provided password but not the stored one,
-        // update the stored password for future use
-        if (pwd === password && pwd !== storedPassword) {
-          persistEncryptionPassword(userId, password);
-        }
-
-        return decrypted;
-      }
-    }
-
-    if (!silent) {
-      console.error('[encryption] Failed to decrypt private key with any available password');
-    }
-    return null;
+    return decrypted;
   }
   return null;
 }
@@ -361,29 +298,27 @@ export async function getPrivateKey(userId: string, password: string, silent: bo
 /**
  * Restore private key from saved backup (the actual base64 private key)
  */
-export async function restorePrivateKey(userId: string, privateKey: string, password?: string): Promise<string | null> {
+export async function restorePrivateKey(userId: string, privateKey: string, password: string): Promise<boolean> {
   if (typeof window !== 'undefined') {
     try {
       // Validate that the private key is valid base64 and correct length
       const decoded = naclUtil.decodeBase64(privateKey.trim());
       if (decoded.length !== nacl.box.secretKeyLength) {
         console.error('[encryption] Invalid private key length:', decoded.length);
-        return null;
+        return false;
       }
 
       // Store it encrypted with password
-      const encryptionPassword = resolveEncryptionPassword(userId, password);
-      clearPrivateKeyCacheForUser(userId);
-      const encryptedKey = await encryptPrivateKey(privateKey.trim(), encryptionPassword);
+      const encryptedKey = await encryptPrivateKey(privateKey.trim(), password);
       localStorage.setItem(`lingo_pk_${userId}`, encryptedKey);
 
-      return encryptionPassword;
+      return true;
     } catch (error) {
       console.error('[encryption] Failed to restore private key:', error);
-      return null;
+      return false;
     }
   }
-  return null;
+  return false;
 }
 
 /**

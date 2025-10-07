@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Key, RefreshCw } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { restorePrivateKey, generateKeyPair, storePrivateKey, getStoredEncryptionPassword } from '@/utils/encryption';
+import { restorePrivateKey, generateKeyPair, storePrivateKey } from '@/utils/encryption';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import toast from 'react-hot-toast';
@@ -20,15 +20,14 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
   const [showRegenerateOption, setShowRegenerateOption] = useState(false);
 
   const handleRecover = async () => {
-    if (!currentUser || !privateKeyInput.trim()) return;
+    if (!currentUser || !privateKeyInput.trim() || !userPassword) return;
 
     setLoading(true);
     try {
-      const encryptionPassword = await restorePrivateKey(currentUser.id, privateKeyInput.trim(), userPassword || undefined);
+      const success = await restorePrivateKey(currentUser.id, privateKeyInput.trim(), userPassword);
 
-      if (encryptionPassword) {
+      if (success) {
         toast.success('Private key restored successfully!');
-        setUserPassword(encryptionPassword);
         triggerKeyRestored(); // Trigger reload of messages
         onSuccess();
       } else {
@@ -43,15 +42,15 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
   };
 
   const handleRegenerate = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !userPassword) return;
 
     setLoading(true);
     try {
       // Generate new key pair
       const { publicKey, privateKey } = generateKeyPair();
 
-      // Store private key
-      const newRecoveryCode = await storePrivateKey(currentUser.id, privateKey, userPassword || undefined);
+      // Store private key with user's password
+      const newRecoveryCode = await storePrivateKey(currentUser.id, privateKey, userPassword);
 
       // Update public key in Firestore
       await updateDoc(doc(db, 'users', currentUser.id), {
@@ -65,10 +64,6 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
         { duration: 15000 }
       );
 
-      const encryptionPassword = getStoredEncryptionPassword(currentUser.id);
-      if (encryptionPassword) {
-        setUserPassword(encryptionPassword);
-      }
       triggerKeyRestored(); // Trigger reload of messages
       onSuccess();
     } catch (error) {
