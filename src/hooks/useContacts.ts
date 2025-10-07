@@ -36,6 +36,9 @@ export function useContacts() {
     );
 
     return () => unsubscribe();
+    // Intentionally omit currentUser to prevent recreation on unrelated updates
+    // Only recreate when contacts list changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, currentUser?.contacts?.sort().join(',')]);
   const addContact = async (email: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     if (!currentUser) return { success: false, error: 'Not authenticated' };

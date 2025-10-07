@@ -3,15 +3,18 @@ import Anthropic from '@anthropic-ai/sdk';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
-// Initialize Firebase Admin (only once)
-if (getApps().length === 0) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+// Lazy initialize Firebase Admin (only when needed, not at build time)
+function getFirebaseAdmin() {
+  if (getApps().length === 0) {
+    initializeApp({
+      credential: cert({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+  return getAuth();
 }
 
 const anthropic = new Anthropic({
@@ -61,7 +64,8 @@ export async function POST(request: NextRequest) {
     let decodedToken;
 
     try {
-      decodedToken = await getAuth().verifyIdToken(token);
+      const auth = getFirebaseAdmin();
+      decodedToken = await auth.verifyIdToken(token);
     } catch (error) {
       return NextResponse.json(
         { error: 'Unauthorized - Invalid authentication token' },

@@ -22,6 +22,9 @@ export function useConversations() {
     );
 
     return () => unsubscribe();
+    // Intentionally omit currentUser to prevent recreation on unrelated updates
+    // Only recreate when user ID changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, setConversations]);
 
   const startConversation = async (recipientEmail: string) => {

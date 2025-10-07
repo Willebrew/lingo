@@ -76,7 +76,7 @@ export default function ChatLayout() {
           <div className="hidden lg:flex w-[96px] flex-col border-r border-white/15 bg-white/8 p-4 text-slate-700 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/20">
             <div className="flex h-16 w-full items-center justify-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/40 bg-white/80 shadow-lg dark:border-white/10 dark:bg-slate-950/70">
-                <Image src="/logo.png" alt="Lingo" width={32} height={32} className="h-8 w-8 rounded-xl object-cover" priority />
+                <Image src="/logo.png" alt="Lingo" width={60} height={60} className="h-10 w-10 rounded-xl object-cover" priority />
               </div>
             </div>
 

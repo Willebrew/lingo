@@ -67,6 +67,7 @@ export function useAuth() {
     });
 
     return () => unsubscribeUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, isSigningUp]);
 
   const signUp = async (email: string, password: string, displayName: string, preferredLanguage: string = 'en') => {
