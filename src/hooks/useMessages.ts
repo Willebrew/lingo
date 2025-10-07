@@ -93,9 +93,9 @@ export function useMessages(conversationId: string | null) {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-    // Only recreate when conversation ID, user ID, or participant IDs change
+    // Only recreate when conversation ID, user ID, participant IDs, password, or key restoration changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, currentUser?.id, participantIds, userPassword]);
+  }, [conversationId, currentUser?.id, participantIds, userPassword, keyRestoredAt]);
 
   const sendMessageToConversation = async (
     content: string,

@@ -67,9 +67,20 @@ export const useStore = create<AppState>((set) => ({
   currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user }),
 
-  // Password state
-  userPassword: null,
-  setUserPassword: (password) => set({ userPassword: password }),
+  // Password state - persisted in sessionStorage for page refreshes
+  userPassword: typeof window !== 'undefined'
+    ? sessionStorage.getItem('lingo_session_pwd')
+    : null,
+  setUserPassword: (password) => {
+    if (typeof window !== 'undefined') {
+      if (password) {
+        sessionStorage.setItem('lingo_session_pwd', password);
+      } else {
+        sessionStorage.removeItem('lingo_session_pwd');
+      }
+    }
+    set({ userPassword: password });
+  },
 
   // Signup state
   isSigningUp: false,
