@@ -24,15 +24,28 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
 
     setLoading(true);
     try {
+      // Step 1: Validate and restore the private key
       const success = await restorePrivateKey(currentUser.id, privateKeyInput.trim(), userPassword);
 
-      if (success) {
-        toast.success('Private key restored successfully!');
-        triggerKeyRestored(); // Trigger reload of messages
-        onSuccess();
-      } else {
-        toast.error('Invalid private key. Please check and try again.');
+      if (!success) {
+        toast.error('Invalid private key format. Please check and try again.');
+        setLoading(false);
+        return;
       }
+
+      // Step 2: Verify the key works by attempting to retrieve it
+      const { getPrivateKey } = await import('@/utils/encryption');
+      const retrievedKey = await getPrivateKey(currentUser.id, userPassword, true);
+
+      if (!retrievedKey) {
+        toast.error('Failed to verify private key. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      toast.success('Private key restored successfully!');
+      triggerKeyRestored(); // Trigger reload of messages
+      onSuccess();
     } catch (error) {
       console.error('Restore failed:', error);
       toast.error('Restore failed. Please check your private key.');
