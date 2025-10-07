@@ -139,7 +139,7 @@ async function decryptPrivateKey(encryptedPrivateKey: string, password: string):
 
       // Verify HMAC
       const hmacKey = await deriveHMACKey(password, salt, iterations);
-      const dataToVerify = combined.slice(0, combined.length - hmacSize);
+      const dataToVerify = combined.slice(1, combined.length - hmacSize);
 
       const isValid = await crypto.subtle.verify(
         'HMAC',
@@ -275,14 +275,14 @@ export async function getPrivateKey(userId: string, password: string, silent: bo
     const encryptedKey = localStorage.getItem(`lingo_pk_${userId}`);
     if (!encryptedKey) {
       if (!silent) {
-        console.error('[encryption] No encrypted private key found in localStorage');
+        console.error('[encryption] No encrypted private key found in localStorage for user:', userId);
       }
       return null;
     }
 
     const decrypted = await decryptPrivateKey(encryptedKey, password);
     if (!decrypted && !silent) {
-      console.error('[encryption] Failed to decrypt private key');
+      console.error('[encryption] Failed to decrypt private key for user:', userId);
     }
 
     // Store in cache if successful
@@ -301,15 +301,42 @@ export async function getPrivateKey(userId: string, password: string, silent: bo
 export async function restorePrivateKey(userId: string, privateKey: string, password: string): Promise<boolean> {
   if (typeof window !== 'undefined') {
     try {
-      // Validate that the private key is valid base64 and correct length
-      const decoded = naclUtil.decodeBase64(privateKey.trim());
+      const trimmedKey = privateKey.trim();
+
+      // Strict validation: Must be valid base64 with no invalid characters
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(trimmedKey)) {
+        console.error('[encryption] Invalid private key format - not valid base64');
+        return false;
+      }
+
+      // Decode and validate length
+      let decoded: Uint8Array;
+      try {
+        decoded = naclUtil.decodeBase64(trimmedKey);
+      } catch (e) {
+        console.error('[encryption] Failed to decode private key as base64');
+        return false;
+      }
+
       if (decoded.length !== nacl.box.secretKeyLength) {
-        console.error('[encryption] Invalid private key length:', decoded.length);
+        console.error('[encryption] Invalid private key length:', decoded.length, 'expected:', nacl.box.secretKeyLength);
+        return false;
+      }
+
+      // Test if the key can actually be used for encryption
+      try {
+        const testPublicKey = nacl.box.keyPair().publicKey;
+        const testMessage = new Uint8Array([1, 2, 3]);
+        const testNonce = nacl.randomBytes(nacl.box.nonceLength);
+        nacl.box(testMessage, testNonce, testPublicKey, decoded);
+      } catch (e) {
+        console.error('[encryption] Private key validation failed - key cannot be used for encryption');
         return false;
       }
 
       // Store it encrypted with password
-      const encryptedKey = await encryptPrivateKey(privateKey.trim(), password);
+      const encryptedKey = await encryptPrivateKey(trimmedKey, password);
       localStorage.setItem(`lingo_pk_${userId}`, encryptedKey);
 
       return true;

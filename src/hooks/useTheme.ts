@@ -1,31 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 
 export function useTheme() {
-  const { theme, toggleTheme, setTheme } = useStore();
+  const { theme, setTheme } = useStore();
 
   useEffect(() => {
-    // Load theme from localStorage
-    const savedTheme = localStorage.getItem('lingo-theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
-    }
+    // Force light mode for now and persist the preference.
+    setTheme('light');
+    localStorage.setItem('lingo-theme', 'light');
+    document.documentElement.classList.remove('dark');
+    document.documentElement.dataset.theme = 'light';
   }, [setTheme]);
 
-  useEffect(() => {
-    // Apply theme to document
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    // Save to localStorage
-    localStorage.setItem('lingo-theme', theme);
-  }, [theme]);
+  // We still expose a toggle handler so existing callers do not break,
+  // but it now no-ops to keep the UI locked to light mode.
+  const disabledToggle = useMemo(() => () => {
+    setTheme('light');
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('lingo-theme', 'light');
+  }, [setTheme]);
 
-  return { theme, toggleTheme };
+  return { theme: 'light', toggleTheme: disabledToggle };
 }

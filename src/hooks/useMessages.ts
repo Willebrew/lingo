@@ -21,8 +21,15 @@ export function useMessages(conversationId: string | null) {
     getConversation(conversationId).then(setConversation);
   }, [conversationId]);
 
+  // Create stable key from participant IDs to prevent unnecessary re-subscriptions
+  const participantIds = conversation?.participants?.sort().join(',') || '';
+  const participantDetailsRef = useRef(conversation?.participantDetails);
   useEffect(() => {
-    if (!conversationId || !currentUser || !conversation || !userPassword) return;
+    participantDetailsRef.current = conversation?.participantDetails;
+  }, [conversation?.participantDetails]);
+
+  useEffect(() => {
+    if (!conversationId || !currentUser || !conversation?.participants || !userPassword) return;
 
     let unsubscribe: (() => void) | undefined;
 
@@ -42,8 +49,8 @@ export function useMessages(conversationId: string | null) {
             const encryptedForMe = msg.encryptedContent[currentUser.id];
             if (!encryptedForMe) return null;
 
-            // Get sender's public key from conversation details
-            const senderPublicKey = conversation.participantDetails[msg.senderId]?.publicKey;
+            // Get sender's public key from participant details
+            const senderPublicKey = participantDetailsRef.current?.[msg.senderId]?.publicKey;
             if (!senderPublicKey) return null;
 
             const content = decryptMessage(
@@ -86,7 +93,9 @@ export function useMessages(conversationId: string | null) {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [conversationId, currentUser, conversation, userPassword, setMessages, notifyNewMessage, keyRestoredAt]);
+    // Only recreate when conversation ID, user ID, or participant IDs change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, currentUser?.id, participantIds, userPassword]);
 
   const sendMessageToConversation = async (
     content: string,

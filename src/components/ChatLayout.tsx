@@ -14,7 +14,7 @@ type ViewType = 'messages' | 'contacts' | 'notifications' | 'settings';
 
 export default function ChatLayout() {
   const [activeView, setActiveView] = useState<ViewType>('messages');
-  const { selectedConversationId, messages, currentUser, readNotifications, userPassword } = useStore();
+  const { selectedConversationId, messages, currentUser, readNotifications, userPassword, justCompletedSignup } = useStore();
   const [showKeyRecovery, setShowKeyRecovery] = useState(false);
   const keyCheckDone = useRef(false);
 
@@ -26,9 +26,11 @@ export default function ChatLayout() {
 
   useEffect(() => {
     const checkPrivateKey = async () => {
-      if (currentUser && userPassword && !keyCheckDone.current) {
+      // Don't check if user just completed signup - they already saw the recovery code
+      if (currentUser && userPassword && !keyCheckDone.current && !justCompletedSignup) {
         keyCheckDone.current = true;
         const privateKey = await getPrivateKey(currentUser.id, userPassword, true);
+
         if (!privateKey) {
           // Key is corrupted or missing - clean it up
           if (typeof window !== 'undefined') {
@@ -39,7 +41,7 @@ export default function ChatLayout() {
       }
     };
     checkPrivateKey();
-  }, [currentUser, userPassword]);
+  }, [currentUser, userPassword, justCompletedSignup]);
 
   // Calculate unread notifications count
   const unreadCount = useMemo(() => {
@@ -59,16 +61,19 @@ export default function ChatLayout() {
         <KeyRecoveryModal onSuccess={() => setShowKeyRecovery(false)} />
       )}
       <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-1/2 h-[130%] w-[135%] -translate-x-1/2 -translate-y-1/2 rounded-[120px] bg-white/18 blur-[180px]" />
         <div className="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full bg-primary-500/25 blur-[140px]" />
         <div className="absolute top-1/3 -right-24 h-[360px] w-[360px] rounded-full bg-accent-400/20 blur-[150px]" />
-        <div className="absolute bottom-[-20%] left-1/2 h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-primary-300/20 blur-[180px]" />
+        <div className="absolute bottom-[-20%] left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-primary-300/18 blur-[180px]" />
+        <div className="absolute inset-x-[-28%] bottom-[-55%] h-[680px] rounded-[280px] bg-gradient-to-t from-white/55 via-white/20 to-transparent blur-[240px]" />
+        <div className="absolute inset-x-[-10%] bottom-[-12%] h-[360px] bg-gradient-to-t from-white/45 via-white/20 to-transparent blur-[120px]" />
       </div>
 
       <div className="relative z-10 flex h-screen flex-col px-4 pb-20 pt-6 sm:px-6 lg:px-10 lg:pb-8">
         <div className="flex flex-1 gap-4 overflow-hidden">
           {/* Desktop: Icon Sidebar */}
-          <div className="hidden lg:flex w-[96px] flex-col rounded-[30px] border border-white/30 bg-white/20 p-4 text-slate-700 shadow-subtle backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/25">
+          <div className="hidden lg:flex w-[96px] flex-col rounded-[30px] border border-white/15 bg-white/8 p-4 text-slate-700 shadow-[0_26px_80px_rgba(62,76,177,0.12)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/20">
             <div className="flex h-16 w-full items-center justify-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/40 bg-white/80 shadow-lg dark:border-white/10 dark:bg-slate-950/70">
                 <Image src="/logo.png" alt="Lingo" width={32} height={32} className="h-8 w-8 rounded-xl object-cover" priority />
@@ -118,7 +123,7 @@ export default function ChatLayout() {
 
           {/* Desktop: Middle Panel */}
           <div className="hidden lg:flex w-[380px] flex-col">
-            <div className="flex h-full w-full flex-col overflow-hidden rounded-[34px] border border-white/40 bg-white/75 shadow-floating backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70">
+            <div className="flex h-full w-full flex-col overflow-hidden rounded-[34px] border border-white/15 bg-white/10 shadow-[0_30px_90px_rgba(62,76,177,0.15)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/40">
               {activeView === 'notifications' ? (
                 <NotificationsPanel onConversationClick={() => setActiveView('messages')} />
               ) : activeView === 'settings' ? (
@@ -131,7 +136,7 @@ export default function ChatLayout() {
 
           {/* Main Content Area */}
           <div className="flex-1">
-            <div className="flex h-full flex-col overflow-hidden rounded-[38px] border border-white/30 bg-white/80 shadow-floating backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70">
+            <div className="flex h-full flex-col overflow-hidden rounded-[38px] border border-white/10 bg-white/8 shadow-[0_40px_110px_rgba(62,76,177,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/45">
               <div className="block h-full lg:hidden">
                 {selectedConversationId ? (
                   <ChatView />

@@ -14,6 +14,10 @@ interface AppState {
   isSigningUp: boolean;
   setIsSigningUp: (isSigningUp: boolean) => void;
 
+  // Just completed signup (prevent key recovery modal)
+  justCompletedSignup: boolean;
+  setJustCompletedSignup: (completed: boolean) => void;
+
   // Conversations
   conversations: Conversation[];
   setConversations: (conversations: Conversation[]) => void;
@@ -70,6 +74,10 @@ export const useStore = create<AppState>((set) => ({
   // Signup state
   isSigningUp: false,
   setIsSigningUp: (isSigningUp) => set({ isSigningUp }),
+
+  // Just completed signup
+  justCompletedSignup: false,
+  setJustCompletedSignup: (completed) => set({ justCompletedSignup: completed }),
 
   // Conversations
   conversations: [],

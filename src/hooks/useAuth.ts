@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -16,11 +16,17 @@ import type { User } from '@/types';
 export function useAuth() {
   const { currentUser, setCurrentUser, setUserPassword, userPassword, isSigningUp, setIsSigningUp } = useStore();
 
+  // Use refs to prevent auth listener from recreating
+  const isSigningUpRef = useRef(isSigningUp);
+  useEffect(() => {
+    isSigningUpRef.current = isSigningUp;
+  }, [isSigningUp]);
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // Don't auto-login during signup - let the recovery modal show first
-        if (isSigningUp) {
+        if (isSigningUpRef.current) {
           return;
         }
 
@@ -31,7 +37,6 @@ export function useAuth() {
             await import('tweetnacl-util').then(m => m.decodeBase64(storedKey));
           } catch (e) {
             // Invalid base64 format, remove it
-            console.log('[useAuth] Removing invalid encryption key');
             localStorage.removeItem(`lingo_pk_${firebaseUser.uid}`);
           }
         }
@@ -39,8 +44,6 @@ export function useAuth() {
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setCurrentUser(userDoc.data() as User);
-          // Password is kept in memory only, not persisted for security
-          // Users will need to re-login if page is refreshed
         }
       } else {
         setCurrentUser(null);
@@ -49,20 +52,22 @@ export function useAuth() {
     });
 
     return () => unsubscribeAuth();
-  }, [setCurrentUser, setUserPassword, isSigningUp, userPassword]);
+  }, [setCurrentUser, setUserPassword]);
 
   // Real-time listener for current user updates (contacts, etc.)
+  // Only subscribe once per user ID to prevent excessive reads
   useEffect(() => {
-    if (!currentUser || isSigningUp) return;
+    const userId = currentUser?.id;
+    if (!userId || isSigningUp) return;
 
-    const unsubscribeUser = onSnapshot(doc(db, 'users', currentUser.id), (snapshot) => {
+    const unsubscribeUser = onSnapshot(doc(db, 'users', userId), (snapshot) => {
       if (snapshot.exists()) {
         setCurrentUser(snapshot.data() as User);
       }
     });
 
     return () => unsubscribeUser();
-  }, [currentUser, isSigningUp, setCurrentUser]);
+  }, [currentUser?.id, isSigningUp]);
 
   const signUp = async (email: string, password: string, displayName: string, preferredLanguage: string = 'en') => {
     try {

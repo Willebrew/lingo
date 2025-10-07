@@ -9,11 +9,12 @@ import { useContacts } from '@/hooks/useContacts';
 import { Send, Lock, Trash2, MoreVertical, UserPlus, Users, Edit3, ArrowLeft } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import { getConversation, addParticipantToConversation } from '@/lib/db';
+import { getPrivateKey } from '@/utils/encryption';
 import type { Conversation } from '@/types';
 import toast from 'react-hot-toast';
 
 export default function ChatView() {
-  const { selectedConversationId, setSelectedConversationId, currentUser, userPassword, markConversationAsRead } = useStore();
+  const { selectedConversationId, setSelectedConversationId, currentUser, userPassword, markConversationAsRead, conversations } = useStore();
   const [messageText, setMessageText] = useState('');
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -30,44 +31,23 @@ export default function ChatView() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialScrollRef = useRef(true);
 
+  // Get conversation from global store instead of creating duplicate listener
   useEffect(() => {
     if (!selectedConversationId) {
       setConversation(null);
       return;
     }
 
-    // Set up real-time listener for conversation
-    const setupListener = async () => {
-      const { doc, onSnapshot } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase');
-
-      const unsubscribe = onSnapshot(
-        doc(db, 'conversations', selectedConversationId),
-        (snapshot) => {
-          if (!snapshot.exists()) {
-            // Conversation was deleted
-            console.log('[ChatView] Conversation deleted, clearing selection');
-            setConversation(null);
-            setSelectedConversationId(null);
-            toast.error('This conversation has been deleted');
-          } else {
-            setConversation({ id: snapshot.id, ...snapshot.data() } as Conversation);
-          }
-        },
-        (error) => {
-          console.error('[ChatView] Error listening to conversation:', error);
-        }
-      );
-
-      return unsubscribe;
-    };
-
-    const listenerPromise = setupListener();
-
-    return () => {
-      listenerPromise.then(unsubscribe => unsubscribe?.());
-    };
-  }, [selectedConversationId, setSelectedConversationId]);
+    const conv = conversations.find(c => c.id === selectedConversationId);
+    if (!conv) {
+      // Conversation not found (might be deleted)
+      setConversation(null);
+      setSelectedConversationId(null);
+      toast.error('This conversation has been deleted');
+    } else {
+      setConversation(conv);
+    }
+  }, [selectedConversationId, conversations, setSelectedConversationId]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -101,8 +81,7 @@ export default function ChatView() {
     if (!messageText.trim() || !conversation || isSending) return;
 
     if (!userPassword) {
-      toast.error('Unlock your keys before sending a message.');
-      setShowKeyRecovery(true);
+      toast.error('Please log in again to send messages.');
       return;
     }
 

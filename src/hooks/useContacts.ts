@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useStore } from '@/store/useStore';
 import type { User } from '@/types';
@@ -16,30 +16,27 @@ export function useContacts() {
       return;
     }
 
-    // Subscribe to all contacts
-    const unsubscribes: (() => void)[] = [];
+    // Use a single query with 'in' operator instead of individual listeners
+    // Firestore 'in' operator supports up to 30 values (more than enough for contacts)
+    const contactIds = currentUser.contacts.slice(0, 30); // Limit to 30 for Firestore 'in' operator
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('__name__', 'in', contactIds));
 
-    currentUser.contacts.forEach((contactId) => {
-      const unsubscribe = onSnapshot(doc(db, 'users', contactId), (doc) => {
-        if (doc.exists()) {
-          const contactData = { ...doc.data(), id: doc.id } as User;
-          setContacts((prev) => {
-            const filtered = prev.filter((c) => c.id !== contactId);
-            return [...filtered, contactData];
-          });
-        }
-      });
-      unsubscribes.push(unsubscribe);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const contactsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setContacts(contactsList);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Failed to load contacts:', error);
+        setLoading(false);
+      }
+    );
 
-    setLoading(false);
-
-    return () => {
-      unsubscribes.forEach((unsub) => unsub());
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id, currentUser?.contacts?.join(',')]);
-
+    return () => unsubscribe();
+  }, [currentUser?.id, currentUser?.contacts?.sort().join(',')]);
   const addContact = async (email: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     if (!currentUser) return { success: false, error: 'Not authenticated' };
 
@@ -47,19 +44,7 @@ export function useContacts() {
       // Find user by email
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
-
-      const snapshot = await new Promise<any>((resolve, reject) => {
-        const unsubscribe = onSnapshot(q,
-          (snap) => {
-            unsubscribe();
-            resolve(snap);
-          },
-          (error) => {
-            unsubscribe();
-            reject(error);
-          }
-        );
-      });
+      const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
         return { success: false, error: 'User not found' };

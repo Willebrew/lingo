@@ -33,7 +33,7 @@ export default function NotificationsPanel({ onConversationClick }: Notification
         .filter(msg => msg.senderId !== currentUser?.id) // Only messages from others
         .filter(msg => !readNotifications.has(msg.id)) // Filter out read messages
         .forEach(msg => {
-          const timestamp = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
+          const timestamp = typeof msg.timestamp === 'number' ? new Date(msg.timestamp) : msg.timestamp;
           allNotifications.push({
             id: msg.id,
             type: 'message',

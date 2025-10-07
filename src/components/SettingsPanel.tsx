@@ -2,8 +2,7 @@
 
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/hooks/useTheme';
-import { Bell, Moon, Sun, Volume2, VolumeX, UserX, LogOut } from 'lucide-react';
+import { Bell, Volume2, VolumeX, UserX, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -18,7 +17,6 @@ export default function SettingsPanel() {
     setNotificationSoundEnabled,
   } = useStore();
   const { signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { conversations, deleteConversation } = useConversations();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -35,20 +33,25 @@ export default function SettingsPanel() {
     <button
       type="button"
       onClick={onToggle}
-      className={`relative flex h-8 w-14 items-center overflow-hidden rounded-full transition-all duration-300 ${
-        enabled
-          ? 'bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 shadow-[0_8px_20px_rgba(35,83,206,0.25)]'
-          : 'bg-slate-200/70 dark:bg-slate-800/70'
+      className={`relative inline-flex h-9 w-16 items-center overflow-hidden rounded-full border border-white/50 bg-white/75 px-1 backdrop-blur transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-200 ${
+        enabled ? 'shadow-[0_6px_18px_rgba(55,126,255,0.26)]' : 'shadow-inner'
       }`}
       aria-pressed={enabled}
     >
       <span className="sr-only">{srLabel}</span>
-      <motion.span
-        className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full bg-white shadow-md"
-        animate={{ x: enabled ? 30 : 4 }}
-        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+      <span
+        className={`inline-flex h-7 w-7 transform items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-accent-400 text-white shadow transition z-10 ${
+          enabled ? 'translate-x-7' : 'translate-x-0'
+        }`}
+      >
+        <span className="h-2 w-2 rounded-full bg-white/80" />
+      </span>
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-0 rounded-full transition z-0 ${
+          enabled ? 'bg-gradient-to-r from-primary-100 via-accent-100/60 to-primary-50' : 'bg-slate-200/60'
+        }`}
       />
-      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full border border-white/40 opacity-60" />
     </button>
   );
 
@@ -65,12 +68,10 @@ export default function SettingsPanel() {
     try {
       setIsDeleting(true);
 
-      console.log('[SettingsPanel] Starting account deletion...');
       const { auth, db } = await import('@/lib/firebase');
       const { doc, deleteDoc, updateDoc, arrayRemove } = await import('firebase/firestore');
       const { deleteUser } = await import('firebase/auth');
 
-      console.log('[SettingsPanel] Checking auth...');
       if (!auth.currentUser) {
         throw new Error('Not authenticated');
       }
@@ -82,23 +83,18 @@ export default function SettingsPanel() {
       const fiveMinutes = 5 * 60 * 1000;
 
       if (now - lastSignInTime > fiveMinutes) {
-        console.log('[SettingsPanel] Recent login required');
         toast.error('For security, please sign out and sign back in, then try deleting your account again.');
         setIsDeleting(false);
         return;
       }
 
       // Clean up conversations
-      console.log('[SettingsPanel] Processing conversations...');
       for (const conv of conversations) {
         if (conv.participants.length === 1) {
-          console.log(`[SettingsPanel] Deleting conversation ${conv.id}`);
           await deleteConversation(conv.id);
         } else if (conv.participants.length === 2) {
-          console.log(`[SettingsPanel] Deleting conversation ${conv.id}`);
           await deleteConversation(conv.id);
         } else {
-          console.log(`[SettingsPanel] Removing user from conversation ${conv.id}`);
           await updateDoc(doc(db, 'conversations', conv.id), {
             participants: arrayRemove(currentUser.id),
             [`participantDetails.${currentUser.id}`]: null
@@ -107,14 +103,11 @@ export default function SettingsPanel() {
       }
 
       // Delete user document from Firestore
-      console.log('[SettingsPanel] Deleting user document...');
       await deleteDoc(doc(db, 'users', currentUser.id));
 
       // Delete user from Firebase Auth
-      console.log('[SettingsPanel] Deleting auth user...');
       await deleteUser(auth.currentUser);
 
-      console.log('[SettingsPanel] Account deletion complete');
       toast.success('Account deleted successfully');
       setShowDeleteAccount(false);
     } catch (error: any) {
@@ -141,32 +134,11 @@ export default function SettingsPanel() {
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin">
         <section>
-          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Appearance</h3>
-          <button
-            onClick={toggleTheme}
-            className="mt-3 flex w-full items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 focus:outline-none dark:border-white/10 dark:bg-slate-900/70"
-          >
-            <div className="flex items-center gap-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </span>
-              <div>
-                <p className="font-display text-lg text-slate-900 dark:text-slate-100">Theme</p>
-                <p className="text-sm text-slate-500 dark:text-slate-300">{theme === 'light' ? 'Light mode' : 'Dark mode'}</p>
-              </div>
-            </div>
-            <span className="rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold text-primary-600 dark:text-primary-300">
-              Toggle
-            </span>
-          </button>
-        </section>
-
-        <section>
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Notifications</h3>
           <div className="mt-3 space-y-3">
-            <div className="flex items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-4 shadow-sm transition hover:border-primary-200 dark:border-white/10 dark:bg-slate-900/70">
+            <div className="flex items-center justify-between rounded-[28px] border border-white/45 bg-white/70 px-6 py-4 shadow-sm backdrop-blur transition hover:border-primary-200 dark:border-white/10 dark:bg-slate-900/70">
               <div className="flex flex-1 items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
+                <span className="flex aspect-square h-12 w-12 flex-shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-primary-500/18 via-primary-400/16 to-accent-400/18 text-primary-600 shadow-sm">
                   <Bell className="h-5 w-5" />
                 </span>
                 <div>
@@ -181,9 +153,9 @@ export default function SettingsPanel() {
               />
             </div>
 
-            <div className="flex items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-4 shadow-sm transition hover:border-primary-200 dark:border-white/10 dark:bg-slate-900/70">
+            <div className="flex items-center justify-between rounded-[28px] border border-white/45 bg-white/70 px-6 py-4 shadow-sm backdrop-blur transition hover:border-primary-200 dark:border-white/10 dark:bg-slate-900/70">
               <div className="flex flex-1 items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
+                <span className="flex aspect-square h-12 w-12 flex-shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-primary-500/18 via-primary-400/16 to-accent-400/18 text-primary-600 shadow-sm">
                   {notificationSoundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
                 </span>
                 <div>
@@ -205,10 +177,10 @@ export default function SettingsPanel() {
           <div className="mt-3 space-y-3">
             <button
               onClick={handleSignOut}
-              className="flex w-full items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 focus:outline-none dark:border-white/10 dark:bg-slate-900/70"
+              className="flex w-full items-center justify-between rounded-[28px] border border-white/45 bg-white/70 px-6 py-5 text-left shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-primary-200 focus:outline-none dark:border-white/10 dark:bg-slate-900/70"
             >
               <div className="flex items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
+                <span className="flex aspect-square h-12 w-12 flex-shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-primary-500/18 via-primary-400/16 to-accent-400/18 text-primary-600 shadow-sm">
                   <LogOut className="h-5 w-5" />
                 </span>
                 <div>
@@ -221,10 +193,10 @@ export default function SettingsPanel() {
 
             <button
               onClick={() => setShowDeleteAccount(true)}
-              className="flex w-full items-center justify-between rounded-[28px] border border-red-200/60 bg-white/85 px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 focus:outline-none dark:border-red-500/25 dark:bg-red-500/15"
+              className="flex w-full items-center justify-between rounded-[28px] border border-red-200/60 bg-white/70 px-6 py-5 text-left shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-red-300 focus:outline-none dark:border-red-500/25 dark:bg-red-500/15"
             >
               <div className="flex items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-red-500/20 via-rose-500/20 to-amber-400/20 text-red-100 shadow-inner dark:text-red-200">
+                <span className="flex aspect-square h-12 w-12 flex-shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-red-500/18 via-rose-500/18 to-amber-400/18 text-red-500 shadow-sm">
                   <UserX className="h-5 w-5" />
                 </span>
                 <div>
@@ -239,7 +211,7 @@ export default function SettingsPanel() {
 
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Account information</h3>
-          <div className="mt-3 space-y-3 rounded-[28px] border border-white/30 bg-white/85 p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
+          <div className="mt-3 space-y-3 rounded-[28px] border border-white/40 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/70">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-400">Name</p>
               <p className="mt-1 font-display text-base text-slate-900 dark:text-slate-100">{currentUser?.displayName}</p>
@@ -260,7 +232,7 @@ export default function SettingsPanel() {
             className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
+              <div className="flex aspect-square h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
                 <UserX className="h-6 w-6" />
               </div>
               <div>

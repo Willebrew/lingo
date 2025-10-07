@@ -22,7 +22,7 @@ export function useConversations() {
     );
 
     return () => unsubscribe();
-  }, [currentUser, setConversations]);
+  }, [currentUser?.id, setConversations]);
 
   const startConversation = async (recipientEmail: string) => {
     if (!currentUser) return null;

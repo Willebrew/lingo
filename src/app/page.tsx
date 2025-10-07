@@ -33,7 +33,6 @@ export default function Home() {
       });
       if (keysToRemove.length > 0) {
         keysToRemove.forEach(key => localStorage.removeItem(key));
-        console.log(`[Cleanup] Removed ${keysToRemove.length} old password storage keys`);
       }
       localStorage.setItem('lingo_pw_cleanup_done', 'true');
     }
