@@ -6,7 +6,9 @@
 
 A modern, secure messaging application with built-in AI-powered translation. Messages are end-to-end encrypted using NaCl encryption, ensuring complete privacy.
 
-> **🤖 AI-Generated Project:** This application was built entirely with Claude Sonnet 4.5 to explore the current capabilities of AI in digital security and full-stack development. It demonstrates what modern AI can accomplish in creating production-ready, secure applications.
+> **🤖 AI-Generated Project:** This application was built with Claude Sonnet 4.5 to explore the current capabilities of AI in digital security and full-stack development. It demonstrates what modern AI can accomplish in creating production-ready, secure applications.
+
+To read more about what I did, visit: https://x.com/willebrew/status/1975630668760760334
 
 ## ✨ Features
 
