@@ -30,11 +30,13 @@ export default function ChatView() {
   const { contacts } = useContacts();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialScrollRef = useRef(true);
+  const deletedToastShownRef = useRef(false);
 
   // Get conversation from global store instead of creating duplicate listener
   useEffect(() => {
     if (!selectedConversationId) {
       setConversation(null);
+      deletedToastShownRef.current = false;
       return;
     }
 
@@ -43,9 +45,15 @@ export default function ChatView() {
       // Conversation not found (might be deleted)
       setConversation(null);
       setSelectedConversationId(null);
-      toast.error('This conversation has been deleted');
+
+      // Only show toast once per deletion
+      if (!deletedToastShownRef.current) {
+        deletedToastShownRef.current = true;
+        toast.error('This conversation has been deleted');
+      }
     } else {
       setConversation(conv);
+      deletedToastShownRef.current = false;
     }
   }, [selectedConversationId, conversations, setSelectedConversationId]);
 

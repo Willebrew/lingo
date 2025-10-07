@@ -269,8 +269,8 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                           <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-400 shadow-sm dark:border-slate-950" />
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-display text-sm text-slate-900 dark:text-white">
+                      <div className="min-w-0 w-full px-2">
+                        <p className="font-display text-sm text-slate-900 dark:text-white truncate">
                           {contact.displayName}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-300 truncate" title={contact.email}>
