@@ -123,7 +123,7 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
               <div>
                 <h3 className="text-2xl font-display text-slate-900 dark:text-white">New keys generated!</h3>
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  Save your private key now. You'll need it to restore your account.
+                  Save your private key now. You&apos;ll need it to restore your account.
                 </p>
               </div>
             </div>
@@ -171,7 +171,7 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
               onClick={handleConfirmSaved}
               className="mt-6 w-full rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
             >
-              I've saved my private key
+              I&apos;ve saved my private key
             </button>
           </>
         ) : (
@@ -191,7 +191,7 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
             <div className="mt-6 rounded-2xl border border-yellow-200/70 bg-yellow-50/90 p-4 text-sm leading-relaxed text-yellow-800 shadow-inner dark:border-yellow-500/20 dark:bg-yellow-500/10 dark:text-yellow-100">
               <p className="font-semibold">⚠️ Important</p>
               <p className="mt-2">
-                Without your private key you can't decrypt past messages. Restoring keeps your history; regenerating wipes previous encrypted conversations.
+                Without your private key you can&apos;t decrypt past messages. Restoring keeps your history; regenerating wipes previous encrypted conversations.
               </p>
             </div>
 
