@@ -254,16 +254,16 @@ export default function ChatView() {
             <ArrowLeft className="h-5 w-5" />
           </button>
 
-          <div className="relative flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500/20 via-primary-400/25 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
+          <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500/20 via-primary-400/25 to-accent-400/20 text-base font-semibold text-primary-600 shadow-inner dark:text-primary-200">
             {isGroupChat ? <Users className="h-5 w-5" /> : getConversationDisplayName().charAt(0).toUpperCase()}
           </div>
 
-          <div>
+          <div className="flex flex-col">
             <h2 className="font-display text-xl text-slate-900 dark:text-white">
               {getConversationDisplayName()}
             </h2>
-            <p className="mt-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-primary-500/80 dark:text-primary-300/80">
-              <Lock className="h-3.5 w-3.5" />
+            <p className="mt-0.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-500/80 dark:text-primary-300/80">
+              <Lock className="h-3 w-3" />
               {isGroupChat ? `Group • ${conversation.participants.length} people` : 'End-to-end encrypted'}
             </p>
           </div>
@@ -281,7 +281,7 @@ export default function ChatView() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 6 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-2xl border border-white/40 bg-white/85 p-2 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
+              className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-2xl border border-white/40 bg-white/85 p-2 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
             >
               <button
                 onClick={() => {
