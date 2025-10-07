@@ -8,9 +8,7 @@ import { useConversations } from '@/hooks/useConversations';
 import { useContacts } from '@/hooks/useContacts';
 import { Send, Lock, Trash2, MoreVertical, UserPlus, Users, Edit3, ArrowLeft } from 'lucide-react';
 import MessageBubble from './MessageBubble';
-import KeyRecoveryModal from './KeyRecoveryModal';
 import { getConversation, addParticipantToConversation } from '@/lib/db';
-import { getPrivateKey } from '@/utils/encryption';
 import type { Conversation } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -20,7 +18,6 @@ export default function ChatView() {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [showKeyRecovery, setShowKeyRecovery] = useState(false);
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string>('');
   const [isAddingParticipant, setIsAddingParticipant] = useState(false);
@@ -32,7 +29,6 @@ export default function ChatView() {
   const { contacts } = useContacts();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialScrollRef = useRef(true);
-  const keyCheckDone = useRef(false);
 
   useEffect(() => {
     if (!selectedConversationId) {
@@ -72,20 +68,6 @@ export default function ChatView() {
       listenerPromise.then(unsubscribe => unsubscribe?.());
     };
   }, [selectedConversationId, setSelectedConversationId]);
-
-  // Check if private key exists - only once per session
-  useEffect(() => {
-    const checkPrivateKey = async () => {
-      if (currentUser && userPassword && selectedConversationId && !keyCheckDone.current) {
-        keyCheckDone.current = true;
-        const privateKey = await getPrivateKey(currentUser.id, userPassword, true);
-        if (!privateKey) {
-          setShowKeyRecovery(true);
-        }
-      }
-    };
-    checkPrivateKey();
-  }, [currentUser, userPassword, selectedConversationId]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -399,16 +381,6 @@ export default function ChatView() {
           </button>
         </form>
       </div>
-
-      {/* Key Recovery Modal */}
-      {showKeyRecovery && (
-        <KeyRecoveryModal
-          onSuccess={() => {
-            setShowKeyRecovery(false);
-            toast.success('Encryption keys restored! You can now send messages.');
-          }}
-        />
-      )}
 
       {/* Add Participant Modal */}
       {showAddParticipant && (

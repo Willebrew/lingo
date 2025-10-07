@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Sidebar from './Sidebar';
 import NotificationsPanel from './NotificationsPanel';
@@ -16,13 +16,24 @@ export default function ChatLayout() {
   const [activeView, setActiveView] = useState<ViewType>('messages');
   const { selectedConversationId, messages, currentUser, readNotifications, userPassword } = useStore();
   const [showKeyRecovery, setShowKeyRecovery] = useState(false);
+  const keyCheckDone = useRef(false);
 
-  // Check if private key exists on login
+  // Check if private key exists on login - only once per user
+  useEffect(() => {
+    // Reset check when user changes
+    keyCheckDone.current = false;
+  }, [currentUser?.id]);
+
   useEffect(() => {
     const checkPrivateKey = async () => {
-      if (currentUser && userPassword) {
+      if (currentUser && userPassword && !keyCheckDone.current) {
+        keyCheckDone.current = true;
         const privateKey = await getPrivateKey(currentUser.id, userPassword, true);
         if (!privateKey) {
+          // Key is corrupted or missing - clean it up
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`lingo_pk_${currentUser.id}`);
+          }
           setShowKeyRecovery(true);
         }
       }
@@ -43,7 +54,11 @@ export default function ChatLayout() {
   }, [messages, currentUser, readNotifications]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <>
+      {showKeyRecovery && (
+        <KeyRecoveryModal onSuccess={() => setShowKeyRecovery(false)} />
+      )}
+      <div className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full bg-primary-500/25 blur-[140px]" />
         <div className="absolute top-1/3 -right-24 h-[360px] w-[360px] rounded-full bg-accent-400/20 blur-[150px]" />
@@ -180,7 +195,7 @@ export default function ChatLayout() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
     </>
   );
 }

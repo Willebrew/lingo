@@ -27,8 +27,14 @@ export function useMessages(conversationId: string | null) {
     let unsubscribe: (() => void) | undefined;
 
     const loadPrivateKey = async () => {
-      const privateKey = await getPrivateKey(currentUser.id, userPassword);
-      if (!privateKey) return;
+      const privateKey = await getPrivateKey(currentUser.id, userPassword, true);
+      if (!privateKey) {
+        // Key is missing or corrupted - clean it up
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(`lingo_pk_${currentUser.id}`);
+        }
+        return;
+      }
 
       unsubscribe = subscribeToMessages(conversationId, (newMessages) => {
         const decrypted = newMessages
@@ -90,9 +96,13 @@ export function useMessages(conversationId: string | null) {
       throw new Error('Missing required authentication data');
     }
 
-    const privateKey = await getPrivateKey(currentUser.id, userPassword);
+    const privateKey = await getPrivateKey(currentUser.id, userPassword, true);
     if (!privateKey) {
-      throw new Error('Failed to decrypt private key');
+      // Key is missing or corrupted - clean it up
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(`lingo_pk_${currentUser.id}`);
+      }
+      throw new Error('Failed to decrypt private key. Please restore your encryption keys.');
     }
 
     try {

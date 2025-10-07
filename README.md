@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="logo.png" alt="Lingo Logo" width="200"/>
+</div>
+
 # 🔒 Lingo - End-to-End Encrypted Messaging
 
 A modern, secure messaging application with built-in AI-powered translation. Messages are end-to-end encrypted using NaCl encryption, ensuring complete privacy.

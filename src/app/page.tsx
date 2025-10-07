@@ -7,6 +7,12 @@ import { useTheme } from '@/hooks/useTheme';
 import AuthForm from '@/components/AuthForm';
 import ChatLayout from '@/components/ChatLayout';
 
+declare global {
+  interface Window {
+    lingoCleanupDone?: boolean;
+  }
+}
+
 export default function Home() {
   const { currentUser } = useStore();
   const [mounted, setMounted] = useState(false);
@@ -14,6 +20,24 @@ export default function Home() {
   const [showingRecoveryModal, setShowingRecoveryModal] = useState(false);
   useAuth();
   useTheme();
+
+  // Cleanup old password storage keys (lingo_pw_*) from broken encryption system
+  if (typeof window !== 'undefined') {
+    const cleanupDone = localStorage.getItem('lingo_pw_cleanup_done');
+    if (!cleanupDone) {
+      const keysToRemove: string[] = [];
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('lingo_pw_')) {
+          keysToRemove.push(key);
+        }
+      });
+      if (keysToRemove.length > 0) {
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        console.log(`[Cleanup] Removed ${keysToRemove.length} old password storage keys`);
+      }
+      localStorage.setItem('lingo_pw_cleanup_done', 'true');
+    }
+  }
 
   useEffect(() => {
     setMounted(true);
