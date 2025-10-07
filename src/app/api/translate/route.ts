@@ -6,6 +6,17 @@ import { getAuth } from 'firebase-admin/auth';
 // Lazy initialize Firebase Admin (only when needed, not at build time)
 function getFirebaseAdmin() {
   if (getApps().length === 0) {
+    const hasCredentials = !!(
+      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      process.env.FIREBASE_PRIVATE_KEY
+    );
+
+    if (!hasCredentials) {
+      console.error('[translate] Missing Firebase Admin credentials');
+      throw new Error('Firebase Admin credentials not configured');
+    }
+
     initializeApp({
       credential: cert({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -66,9 +77,10 @@ export async function POST(request: NextRequest) {
     try {
       const auth = getFirebaseAdmin();
       decodedToken = await auth.verifyIdToken(token);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[translate] Token verification failed:', error.code, error.message);
       return NextResponse.json(
-        { error: 'Unauthorized - Invalid authentication token' },
+        { error: 'Unauthorized - Invalid authentication token', details: error.message },
         { status: 401 }
       );
     }

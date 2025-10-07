@@ -258,6 +258,8 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
             </div>
           </>
         )}
+          </>
+        )}
       </motion.div>
     </div>
   );

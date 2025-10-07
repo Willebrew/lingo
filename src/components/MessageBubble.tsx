@@ -92,37 +92,39 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
               </span>
             )}
 
-            <div
-              className={`relative rounded-[26px] px-5 py-3 shadow-lg backdrop-blur ${
-                isOwn
-                  ? 'bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 text-white'
-                  : 'border border-white/50 bg-white/85 text-slate-700 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100'
-              }`}
-            >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+            <div className="relative flex items-start gap-2">
+              <div
+                className={`flex-1 rounded-[26px] px-5 py-3 shadow-lg backdrop-blur ${
+                  isOwn
+                    ? 'bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 text-white'
+                    : 'border border-white/50 bg-white/85 text-slate-700 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100'
+                }`}
+              >
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
 
-              {isTranslating && (
-                <span className={`mt-3 inline-flex items-center gap-2 text-xs ${isOwn ? 'text-white/80' : 'text-primary-600 dark:text-primary-300'}`}>
-                  <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.38 0 0 5.38 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.05 1.14 5.84 3.01 7.96l2.99-2.669z" />
-                  </svg>
-                  Translating...
-                </span>
-              )}
+                {isTranslating && (
+                  <span className={`mt-3 inline-flex items-center gap-2 text-xs ${isOwn ? 'text-white/80' : 'text-primary-600 dark:text-primary-300'}`}>
+                    <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.38 0 0 5.38 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.05 1.14 5.84 3.01 7.96l2.99-2.669z" />
+                    </svg>
+                    Translating...
+                  </span>
+                )}
 
-              {message.translated && !isTranslating && (
-                <span className={`mt-3 inline-flex items-center gap-1 text-xs font-medium ${isOwn ? 'text-white/80' : 'text-primary-600 dark:text-primary-200'}`}>
-                  <Languages className="h-3 w-3" />
-                  Translated
-                </span>
-              )}
+                {message.translated && !isTranslating && (
+                  <span className={`mt-3 inline-flex items-center gap-1 text-xs font-medium ${isOwn ? 'text-white/80' : 'text-primary-600 dark:text-primary-200'}`}>
+                    <Languages className="h-3 w-3" />
+                    Translated
+                  </span>
+                )}
+              </div>
 
               {!isOwn && (
-                <>
+                <div className="relative pt-1">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-2xl border border-white/50 bg-white/70 text-slate-400 opacity-0 transition hover:text-primary-600 group-hover:opacity-100 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300"
+                    className="flex h-8 w-8 items-center justify-center rounded-2xl border border-white/50 bg-white/70 text-slate-400 opacity-0 transition hover:text-primary-600 group-hover:opacity-100 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300"
                   >
                     <MoreVertical className="h-3.5 w-3.5" />
                   </button>
@@ -131,7 +133,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95, y: 6 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
-                      className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/40 bg-white/85 p-2 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
+                      className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/40 bg-white/85 p-2 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 z-50"
                     >
                       <button
                         onClick={handleTranslateClick}
@@ -143,7 +145,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                       </button>
                     </motion.div>
                   )}
-                </>
+                </div>
               )}
             </div>
 
