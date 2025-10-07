@@ -104,7 +104,7 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
             </div>
             <button
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-500 transition hover:border-primary-200 hover:text-slate-800 dark:border-white/15 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-500 transition hover:border-primary-200 hover:text-slate-800 dark:border-white/15 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
