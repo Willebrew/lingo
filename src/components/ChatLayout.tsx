@@ -1,18 +1,34 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Sidebar from './Sidebar';
 import NotificationsPanel from './NotificationsPanel';
 import SettingsPanel from './SettingsPanel';
 import ChatView from './ChatView';
+import KeyRecoveryModal from './KeyRecoveryModal';
 import { MessageSquare, Users, Bell, Settings, ShieldCheck } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { getPrivateKey } from '@/utils/encryption';
 type ViewType = 'messages' | 'contacts' | 'notifications' | 'settings';
 
 export default function ChatLayout() {
   const [activeView, setActiveView] = useState<ViewType>('messages');
-  const { selectedConversationId, messages, currentUser, readNotifications } = useStore();
+  const { selectedConversationId, messages, currentUser, readNotifications, userPassword } = useStore();
+  const [showKeyRecovery, setShowKeyRecovery] = useState(false);
+
+  // Check if private key exists on login
+  useEffect(() => {
+    const checkPrivateKey = async () => {
+      if (currentUser && userPassword) {
+        const privateKey = await getPrivateKey(currentUser.id, userPassword, true);
+        if (!privateKey) {
+          setShowKeyRecovery(true);
+        }
+      }
+    };
+    checkPrivateKey();
+  }, [currentUser, userPassword]);
 
   // Calculate unread notifications count
   const unreadCount = useMemo(() => {
@@ -165,5 +181,6 @@ export default function ChatLayout() {
         </div>
       </div>
     </div>
+    </>
   );
 }

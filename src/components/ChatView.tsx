@@ -32,6 +32,7 @@ export default function ChatView() {
   const { contacts } = useContacts();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialScrollRef = useRef(true);
+  const keyCheckDone = useRef(false);
 
   useEffect(() => {
     if (!selectedConversationId) {
@@ -72,10 +73,11 @@ export default function ChatView() {
     };
   }, [selectedConversationId, setSelectedConversationId]);
 
-  // Check if private key exists
+  // Check if private key exists - only once per session
   useEffect(() => {
     const checkPrivateKey = async () => {
-      if (currentUser && userPassword) {
+      if (currentUser && userPassword && selectedConversationId && !keyCheckDone.current) {
+        keyCheckDone.current = true;
         const privateKey = await getPrivateKey(currentUser.id, userPassword, true);
         if (!privateKey) {
           setShowKeyRecovery(true);
@@ -83,7 +85,7 @@ export default function ChatView() {
       }
     };
     checkPrivateKey();
-  }, [currentUser, userPassword]);
+  }, [currentUser, userPassword, selectedConversationId]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;

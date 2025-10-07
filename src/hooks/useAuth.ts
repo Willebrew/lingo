@@ -24,6 +24,24 @@ export function useAuth() {
           return;
         }
 
+        // Clean up any corrupted keys from broken encryption system
+        const storedKey = localStorage.getItem(`lingo_pk_${firebaseUser.uid}`);
+        if (storedKey) {
+          try {
+            // Try to parse to see if it's a v2 key (starts with version byte 2)
+            const decoded = await import('tweetnacl-util').then(m => m.decodeBase64(storedKey));
+            // If it's a v2 key and we don't have a password, it's corrupted
+            if (decoded[0] === 2 && !userPassword) {
+              console.log('[useAuth] Removing corrupted v2 encryption key');
+              localStorage.removeItem(`lingo_pk_${firebaseUser.uid}`);
+            }
+          } catch (e) {
+            // Invalid format, remove it
+            console.log('[useAuth] Removing invalid encryption key');
+            localStorage.removeItem(`lingo_pk_${firebaseUser.uid}`);
+          }
+        }
+
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setCurrentUser(userDoc.data() as User);
@@ -37,7 +55,7 @@ export function useAuth() {
     });
 
     return () => unsubscribeAuth();
-  }, [setCurrentUser, setUserPassword, isSigningUp]);
+  }, [setCurrentUser, setUserPassword, isSigningUp, userPassword]);
 
   // Real-time listener for current user updates (contacts, etc.)
   useEffect(() => {
