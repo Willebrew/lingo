@@ -148,7 +148,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
             </div>
 
             <div className={`mt-1 flex items-center gap-1 px-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-              <span className={`text-[10px] ${isOwn ? 'text-white/70' : 'text-slate-400 dark:text-slate-300'}`}>
+              <span className="text-[10px] text-slate-400 dark:text-slate-400">
                 {format(message.timestamp, 'p')}
               </span>
             </div>

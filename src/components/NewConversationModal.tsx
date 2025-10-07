@@ -92,7 +92,7 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 via-primary-400 to-accent-400 text-white shadow-lg">
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 via-primary-400 to-accent-400 text-white shadow-lg">
                 <Users className="h-6 w-6" />
               </div>
               <div>
