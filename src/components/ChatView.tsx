@@ -241,14 +241,14 @@ export default function ChatView() {
 
   if (!selectedConversationId) {
     return (
-      <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <Lock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            No conversation selected
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            Select a conversation to start messaging
+      <div className="flex h-full items-center justify-center bg-transparent px-6 py-12">
+        <div className="max-w-md rounded-[32px] border border-dashed border-white/50 bg-white/60 px-10 py-12 text-center shadow-inner backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/50">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 dark:text-primary-300">
+            <Lock className="h-8 w-8" />
+          </div>
+          <h3 className="mt-6 text-2xl font-display text-slate-900 dark:text-white">Select a conversation</h3>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Choose a thread from the left to begin your encrypted chat.
           </p>
         </div>
       </div>
@@ -256,114 +256,117 @@ export default function ChatView() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Mobile back button */}
-            <button
-              onClick={() => setSelectedConversationId(null)}
-              className="lg:hidden p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+      <header className="flex items-center justify-between border-b border-white/30 bg-white/70 px-6 py-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setSelectedConversationId(null)}
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/60 bg-white/70 text-slate-500 transition hover:text-slate-900 lg:hidden dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
 
-            <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">
-              {isGroupChat ? <Users className="w-5 h-5" /> : getConversationDisplayName().charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h2 className="font-semibold">{getConversationDisplayName()}</h2>
-              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                <Lock className="w-3 h-3" />
-                {isGroupChat ? `Group chat • ${conversation.participants.length} participants` : 'End-to-end encrypted'}
-              </p>
-            </div>
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500/20 via-primary-400/25 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-300">
+            {isGroupChat ? <Users className="h-5 w-5" /> : getConversationDisplayName().charAt(0).toUpperCase()}
           </div>
 
-          {/* Menu button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
+          <div>
+            <h2 className="font-display text-xl text-slate-900 dark:text-white">
+              {getConversationDisplayName()}
+            </h2>
+            <p className="mt-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-primary-500/80 dark:text-primary-300/80">
+              <Lock className="h-3.5 w-3.5" />
+              {isGroupChat ? `Group • ${conversation.participants.length} people` : 'End-to-end encrypted'}
+            </p>
+          </div>
+        </div>
 
-            {showMenu && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-2 min-w-[180px] z-10"
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/50 bg-white/70 text-slate-500 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+          >
+            <MoreVertical className="h-5 w-5" />
+          </button>
+
+          {showMenu && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-2xl border border-white/40 bg-white/85 p-2 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
+            >
+              <button
+                onClick={() => {
+                  setConversationName(conversation?.name || '');
+                  setShowEditName(true);
+                  setShowMenu(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-600 transition hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
               >
-                <button
-                  onClick={() => {
-                    setConversationName(conversation?.name || '');
-                    setShowEditName(true);
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  Edit Name
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddParticipant(true);
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-lg text-sm transition-colors"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Add Participant
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(true);
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete Conversation
-                </button>
-              </motion.div>
-            )}
-          </div>
+                <Edit3 className="h-4 w-4" />
+                Rename conversation
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddParticipant(true);
+                  setShowMenu(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-primary-600 transition hover:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/15"
+              >
+                <UserPlus className="h-4 w-4" />
+                Add participant
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(true);
+                  setShowMenu(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-500 transition hover:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete conversation
+              </button>
+            </motion.div>
+          )}
+        </div>
+      </header>
+
+      {/* Messages */}
+      <div className="relative flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
+        <div className="pointer-events-none absolute inset-0 bg-soft-grid [background-size:22px_22px] opacity-40 dark:opacity-20" />
+        <div className="relative space-y-4">
+          <AnimatePresence initial={false}>
+            {messages.map((message, index) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwn={message.senderId === currentUser?.id}
+                index={index}
+              />
+            ))}
+          </AnimatePresence>
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin">
-        <AnimatePresence initial={false}>
-          {messages.map((message, index) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isOwn={message.senderId === currentUser?.id}
-              index={index}
-            />
-          ))}
-        </AnimatePresence>
-        <div ref={messagesEndRef} />
-      </div>
-
       {/* Input */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-        <form onSubmit={handleSendMessage} className="flex gap-3">
+      <div className="border-t border-white/30 bg-white/70 px-6 py-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-3">
           <input
             type="text"
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
+            placeholder="Write something thoughtful…"
+            className="flex-1 rounded-[24px] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
           />
           <button
             type="submit"
             disabled={!messageText.trim() || isSending}
-            className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+            className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary-600 via-primary-500 to-accent-500 text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Send"
           >
-            <Send className="w-5 h-5" />
+            <Send className="h-5 w-5" />
           </button>
         </form>
       </div>
@@ -380,56 +383,68 @@ export default function ChatView() {
 
       {/* Add Participant Modal */}
       {showAddParticipant && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 via-primary-400 to-accent-400 text-white shadow-lg">
+                <UserPlus className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">Add Participant</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Add someone from your contacts
+                <h3 className="text-2xl font-display text-slate-900 dark:text-white">Add participants</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Bring more people into this encrypted conversation.
                 </p>
               </div>
             </div>
 
             {availableContacts.length === 0 ? (
-              <div>
-                <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                  <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">All your contacts are already in this conversation</p>
+              <div className="mt-8 space-y-6">
+                <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/40 bg-white/50 px-6 py-10 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-400">
+                  <Users className="mb-4 h-12 w-12 text-primary-400" />
+                  <p className="font-semibold">Everyone is already here</p>
+                  <p className="mt-2 text-sm text-slate-500/80 dark:text-slate-400/80">
+                    All of your saved contacts are part of this conversation.
+                  </p>
                 </div>
                 <button
                   onClick={() => {
                     setShowAddParticipant(false);
                     setSelectedContactId('');
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="w-full rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
                 >
                   Close
                 </button>
               </div>
             ) : (
-              <>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Select Contact</label>
-                  <select
-                    value={selectedContactId}
-                    onChange={(e) => setSelectedContactId(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                  >
-                    <option value="">Choose a contact...</option>
-                    {availableContacts.map((contact) => (
-                      <option key={contact.id} value={contact.id}>
-                        {contact.displayName} ({contact.email})
-                      </option>
-                    ))}
-                  </select>
+              <div className="mt-8 space-y-6">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                    Select contact
+                  </label>
+                  <div className="mt-2 relative">
+                    <select
+                      value={selectedContactId}
+                      onChange={(e) => setSelectedContactId(e.target.value)}
+                      className="w-full appearance-none rounded-2xl border border-white/40 bg-white/70 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
+                    >
+                      <option value="">Choose a contact…</option>
+                      {availableContacts.map((contact) => (
+                        <option key={contact.id} value={contact.id}>
+                          {contact.displayName} ({contact.email})
+                        </option>
+                      ))}
+                    </select>
+                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                      <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.24 4.38a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -438,19 +453,19 @@ export default function ChatView() {
                       setShowAddParticipant(false);
                       setSelectedContactId('');
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAddParticipant}
                     disabled={!selectedContactId || isAddingParticipant}
-                    className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isAddingParticipant ? 'Adding...' : 'Add'}
+                    {isAddingParticipant ? 'Adding…' : 'Add'}
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </motion.div>
         </div>
@@ -458,51 +473,53 @@ export default function ChatView() {
 
       {/* Edit Name Modal */}
       {showEditName && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center">
-                <Edit3 className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 via-primary-400 to-accent-400 text-white shadow-lg">
+                <Edit3 className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">Edit Conversation Name</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Set a custom name for this conversation
+                <h3 className="text-2xl font-display text-slate-900 dark:text-white">Rename conversation</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Give this chat a name that makes it easy to find later.
                 </p>
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Conversation Name</label>
+            <div className="mt-8">
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                Conversation name
+              </label>
               <input
                 type="text"
                 value={conversationName}
                 onChange={(e) => setConversationName(e.target.value)}
-                placeholder="Leave empty to use participant names"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                placeholder="Leave blank to use participant names"
+                className="mt-2 w-full rounded-2xl border border-white/40 bg-white/70 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
                 autoFocus
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={() => {
                   setShowEditName(false);
                   setConversationName('');
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateName}
-                className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+                className="flex-1 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
               >
-                Save
+                Save changes
               </button>
             </div>
           </motion.div>
@@ -511,43 +528,43 @@ export default function ChatView() {
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
+                <Trash2 className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">Delete Conversation?</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  This action cannot be undone
+                <h3 className="text-2xl font-display text-slate-900 dark:text-white">Delete this conversation?</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Everyone loses access to the history when you confirm.
                 </p>
               </div>
             </div>
 
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-800 dark:text-red-200">
-                <strong>⚠️ Warning:</strong> This will delete the conversation and all messages
-                <strong> for all participants</strong>. Everyone in this conversation will lose access to these messages.
+            <div className="mt-6 rounded-2xl border border-red-200/70 bg-red-50/90 p-5 text-sm leading-relaxed text-red-700 shadow-inner dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-100">
+              <p className="font-semibold">⚠️ Heads up</p>
+              <p className="mt-2">
+                Deleting removes every encrypted message for all participants. There’s no undo—make sure the team is ready.
               </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
-                Cancel
+                Keep history
               </button>
               <button
                 onClick={handleDeleteConversation}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                className="flex-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
               >
-                Delete for Everyone
+                Delete for everyone
               </button>
             </div>
           </motion.div>

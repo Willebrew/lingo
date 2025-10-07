@@ -19,6 +19,7 @@ export function generateKeyPair(): EncryptionKeys {
 
 /**
  * Derive encryption key from password using PBKDF2
+ * Using 600,000 iterations as per OWASP 2023 recommendations
  */
 async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promise<CryptoKey> {
   const encoder = new TextEncoder();
@@ -34,7 +35,7 @@ async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promis
     {
       name: 'PBKDF2',
       salt: salt,
-      iterations: 100000,
+      iterations: 600000, // OWASP 2023 recommendation (was 100,000)
       hash: 'SHA-256',
     },
     passwordKey,
@@ -45,7 +46,35 @@ async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promis
 }
 
 /**
+ * Derive HMAC key from password for integrity checks
+ */
+async function deriveHMACKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  const encoder = new TextEncoder();
+  const passwordKey = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits', 'deriveKey']
+  );
+
+  return await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 600000,
+      hash: 'SHA-256',
+    },
+    passwordKey,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify']
+  );
+}
+
+/**
  * Encrypt private key with password before storage
+ * Includes HMAC for integrity protection
  */
 async function encryptPrivateKey(privateKey: string, password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -59,36 +88,92 @@ async function encryptPrivateKey(privateKey: string, password: string): Promise<
     encoder.encode(privateKey)
   );
 
-  // Combine salt + iv + encrypted data
-  const combined = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
-  combined.set(salt, 0);
-  combined.set(iv, salt.length);
-  combined.set(new Uint8Array(encryptedData), salt.length + iv.length);
+  // Generate HMAC for integrity
+  const hmacKey = await deriveHMACKey(password, salt);
+  const dataToSign = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
+  dataToSign.set(salt, 0);
+  dataToSign.set(iv, salt.length);
+  dataToSign.set(new Uint8Array(encryptedData), salt.length + iv.length);
+
+  const hmacSignature = await crypto.subtle.sign(
+    'HMAC',
+    hmacKey,
+    dataToSign
+  );
+
+  // Combine: version(1) + salt(16) + iv(12) + encrypted data + hmac(32)
+  const version = new Uint8Array([2]); // Version 2 with HMAC
+  const combined = new Uint8Array(1 + salt.length + iv.length + encryptedData.byteLength + hmacSignature.byteLength);
+  combined.set(version, 0);
+  combined.set(salt, 1);
+  combined.set(iv, 1 + salt.length);
+  combined.set(new Uint8Array(encryptedData), 1 + salt.length + iv.length);
+  combined.set(new Uint8Array(hmacSignature), 1 + salt.length + iv.length + encryptedData.byteLength);
 
   return naclUtil.encodeBase64(combined);
 }
 
 /**
  * Decrypt private key with password
+ * Verifies HMAC integrity for version 2+ keys
  */
 async function decryptPrivateKey(encryptedPrivateKey: string, password: string): Promise<string | null> {
   try {
     const combined = naclUtil.decodeBase64(encryptedPrivateKey);
-    const salt = combined.slice(0, 16);
-    const iv = combined.slice(16, 28);
-    const data = combined.slice(28);
 
-    const key = await deriveKeyFromPassword(password, salt);
+    // Check version
+    const version = combined[0];
 
-    const decryptedData = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: iv },
-      key,
-      data
-    );
+    if (version === 2) {
+      // Version 2: Has HMAC integrity check
+      const salt = combined.slice(1, 17);
+      const iv = combined.slice(17, 29);
+      const hmacSize = 32; // SHA-256 HMAC is 32 bytes
+      const data = combined.slice(29, combined.length - hmacSize);
+      const storedHmac = combined.slice(combined.length - hmacSize);
 
-    const decoder = new TextDecoder();
-    const result = decoder.decode(decryptedData);
-    return result;
+      // Verify HMAC
+      const hmacKey = await deriveHMACKey(password, salt);
+      const dataToVerify = combined.slice(0, combined.length - hmacSize);
+
+      const isValid = await crypto.subtle.verify(
+        'HMAC',
+        hmacKey,
+        storedHmac,
+        dataToVerify
+      );
+
+      if (!isValid) {
+        console.error('[encryption] HMAC verification failed - data may be tampered');
+        return null;
+      }
+
+      // Decrypt data
+      const key = await deriveKeyFromPassword(password, salt);
+      const decryptedData = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        data
+      );
+
+      const decoder = new TextDecoder();
+      return decoder.decode(decryptedData);
+    } else {
+      // Legacy version 1 or unversioned: No HMAC (backwards compatibility)
+      const salt = combined.slice(0, 16);
+      const iv = combined.slice(16, 28);
+      const data = combined.slice(28);
+
+      const key = await deriveKeyFromPassword(password, salt);
+      const decryptedData = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        data
+      );
+
+      const decoder = new TextDecoder();
+      return decoder.decode(decryptedData);
+    }
   } catch (error) {
     console.error('[encryption] Decryption failed:', error);
     return null;

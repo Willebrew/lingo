@@ -16,25 +16,24 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({ message, isOwn, index }: MessageBubbleProps) {
   const [showMenu, setShowMenu] = useState(false);
-  const [showTranslate, setShowTranslate] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [targetLang, setTargetLang] = useState('');
   const { translateMessage } = useMessages(message.conversationId);
-  const { selectedConversationId, currentUser, translatingMessages } = useStore();
+  const { currentUser, translatingMessages } = useStore();
   const isTranslating = translatingMessages.has(message.id);
 
-  // Render system messages differently
   if (message.isSystemMessage) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.03 }}
-        className="flex justify-center my-4"
+        className="flex justify-center py-2"
       >
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full">
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            {message.content} by {message.senderName}
+        <div className="flex items-center gap-2 rounded-full border border-white/40 bg-white/80 px-4 py-2 text-xs text-slate-500 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300">
+          <p className="font-medium text-slate-600 dark:text-slate-300">
+            {message.content}
+            <span className="text-slate-400"> — {message.senderName}</span>
           </p>
         </div>
       </motion.div>
@@ -42,7 +41,6 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
   }
 
   const handleTranslateClick = () => {
-    // Auto-set target language to user's preferred language
     if (currentUser?.preferredLanguage) {
       setTargetLang(currentUser.preferredLanguage);
     }
@@ -52,7 +50,6 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
   const handleTranslate = async () => {
     if (!targetLang) return;
     await translateMessage(message.id, targetLang);
-    setShowTranslate(false);
     setShowMenu(false);
     setShowWarning(false);
   };
@@ -80,146 +77,147 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
       transition={{ delay: index * 0.03 }}
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
     >
-      <div className={`relative group max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
-        <div className="flex items-start gap-2">
+      <div className={`relative group flex max-w-[72%] flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+        <div className={`flex items-start gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
           {!isOwn && (
-            <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/25 to-accent-400/20 text-sm font-semibold text-primary-600 shadow-sm dark:text-primary-200">
               {message.senderName.charAt(0).toUpperCase()}
             </div>
           )}
 
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-1">
             {!isOwn && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-1">
+              <span className="px-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
                 {message.senderName}
               </span>
             )}
 
-            <div>
-              <div
-                className={`relative px-4 py-2 rounded-2xl shadow-sm ${
-                  isOwn
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+            <div
+              className={`relative rounded-[26px] px-5 py-3 shadow-lg backdrop-blur ${
+                isOwn
+                  ? 'bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 text-white'
+                  : 'border border-white/50 bg-white/85 text-slate-700 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100'
+              }`}
+            >
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
 
-                {isTranslating && (
-                  <span className="inline-flex items-center gap-1 text-xs opacity-70 mt-1">
-                    <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Translating...
-                  </span>
-                )}
+              {isTranslating && (
+                <span className={`mt-3 inline-flex items-center gap-2 text-xs ${isOwn ? 'text-white/80' : 'text-primary-600 dark:text-primary-300'}`}>
+                  <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.38 0 0 5.38 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.05 1.14 5.84 3.01 7.96l2.99-2.669z" />
+                  </svg>
+                  Translating...
+                </span>
+              )}
 
-                {message.translated && !isTranslating && (
-                  <span className="inline-flex items-center gap-1 text-xs opacity-70 mt-1">
-                    <Languages className="w-3 h-3" />
-                    Translated
-                  </span>
-                )}
+              {message.translated && !isTranslating && (
+                <span className={`mt-3 inline-flex items-center gap-1 text-xs font-medium ${isOwn ? 'text-white/80' : 'text-primary-600 dark:text-primary-200'}`}>
+                  <Languages className="h-3 w-3" />
+                  Translated
+                </span>
+              )}
 
-                {/* Message menu - Only for received messages */}
-                {!isOwn && (
-                  <>
-                    <button
-                      onClick={() => setShowMenu(!showMenu)}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+              {!isOwn && (
+                <>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-2xl border border-white/50 bg-white/70 text-slate-400 opacity-0 transition hover:text-primary-600 group-hover:opacity-100 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300"
+                  >
+                    <MoreVertical className="h-3.5 w-3.5" />
+                  </button>
+
+                  {showMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 6 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/40 bg-white/85 p-2 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
                     >
-                      <MoreVertical className="w-3 h-3" />
-                    </button>
-
-                    {showMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="absolute right-2 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-2 z-10 min-w-[150px]"
+                      <button
+                        onClick={handleTranslateClick}
+                        disabled={isTranslating}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-600 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-900"
                       >
-                        <button
-                          onClick={handleTranslateClick}
-                          disabled={isTranslating}
-                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Languages className="w-4 h-4" />
-                          {isTranslating ? 'Translating...' : 'Translate'}
-                        </button>
-                      </motion.div>
-                    )}
-                  </>
-                )}
-              </div>
+                        <Languages className="h-4 w-4" />
+                        {isTranslating ? 'Translating...' : 'Translate'}
+                      </button>
+                    </motion.div>
+                  )}
+                </>
+              )}
+            </div>
 
-              {/* Timestamp below bubble */}
-              <div className={`flex items-center gap-1 mt-1 px-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                <span className={`text-[10px] ${isOwn ? 'text-gray-400 dark:text-gray-500' : 'text-gray-400 dark:text-gray-500'}`}>
-                  {format(message.timestamp, 'p')}
+            <div className={`mt-1 flex items-center gap-1 px-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+              <span className={`text-[10px] ${isOwn ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}>
+                {format(message.timestamp, 'p')}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
+          >
+            <h3 className="text-2xl font-display text-slate-900 dark:text-white">Translation security check</h3>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Translating sends the decrypted message to our secure translation service. Proceed only if you trust the destination.
+            </p>
+
+            <div className="mt-6 rounded-2xl border border-yellow-200/70 bg-yellow-50/90 p-4 text-sm leading-relaxed text-yellow-800 shadow-inner dark:border-yellow-500/20 dark:bg-yellow-500/10 dark:text-yellow-100">
+              <p className="font-semibold">Heads up</p>
+              <p className="mt-2">
+                This temporarily steps outside end-to-end encryption. Avoid translating sensitive details.
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                Target language
+              </p>
+              <div className="mt-3 relative">
+                <select
+                  value={targetLang}
+                  onChange={(e) => setTargetLang(e.target.value)}
+                  className="w-full appearance-none rounded-2xl border border-white/40 bg-white/70 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
+                >
+                  <option value="">Select language</option>
+                  {languages.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.24 4.38a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                  </svg>
                 </span>
               </div>
             </div>
 
-            {/* Translation Warning Dialog */}
-            {showWarning && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
-                >
-                  <h3 className="text-lg font-bold mb-3">⚠️ Security Warning</h3>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                      <strong>Translation breaks end-to-end encryption!</strong>
-                    </p>
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-2">
-                      To translate this message, its decrypted content will be sent to our server and the Claude AI API. This means the message will temporarily leave the encrypted channel.
-                    </p>
-                  </div>
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      Translate to:
-                      {currentUser?.preferredLanguage && (
-                        <span className="ml-2 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded">
-                          Your preferred language
-                        </span>
-                      )}
-                    </p>
-                    <select
-                      value={targetLang}
-                      onChange={(e) => setTargetLang(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                    >
-                      <option value="">Select language</option>
-                      {languages.map((lang) => (
-                        <option key={lang.code} value={lang.code}>
-                          {lang.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowWarning(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleTranslate}
-                      disabled={!targetLang}
-                      className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      I Understand, Translate
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </div>
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => setShowWarning(false)}
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTranslate}
+                disabled={!targetLang || isTranslating}
+                className="flex-1 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isTranslating ? 'Translating...' : 'Translate now'}
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 }

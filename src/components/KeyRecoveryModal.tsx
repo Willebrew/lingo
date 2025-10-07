@@ -75,87 +75,90 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+        className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
       >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-white" />
+        <div className="flex items-start gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 via-amber-400 to-orange-400 text-white shadow-lg">
+            <AlertTriangle className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold">Encryption Keys Missing</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Your private key is not found
+            <h3 className="text-2xl font-display text-slate-900 dark:text-white">Private key missing</h3>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Restore it with your recovery code or generate a fresh key pair.
             </p>
           </div>
         </div>
 
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            <strong>⚠️ Important:</strong> Without your private key, you cannot decrypt messages.
-            You can either recover it using your recovery code or generate new keys (old messages will be lost).
+        <div className="mt-6 rounded-2xl border border-yellow-200/70 bg-yellow-50/90 p-4 text-sm leading-relaxed text-yellow-800 shadow-inner dark:border-yellow-500/20 dark:bg-yellow-500/10 dark:text-yellow-100">
+          <p className="font-semibold">⚠️ Important</p>
+          <p className="mt-2">
+            Without your private key you can’t decrypt past messages. Restoring keeps your history; regenerating wipes previous encrypted conversations.
           </p>
         </div>
 
         {!showRegenerateOption ? (
           <>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">
-                <Key className="w-4 h-4 inline mr-1" />
-                Private Key
+            <div className="mt-6">
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <span className="inline-flex items-center gap-2">
+                  <Key className="h-4 w-4" /> Private key
+                </span>
               </label>
               <textarea
                 value={privateKeyInput}
                 onChange={(e) => setPrivateKeyInput(e.target.value)}
                 placeholder="Paste your private key here (base64 string)"
                 rows={4}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none font-mono text-sm resize-none"
+                className="mt-3 w-full resize-none rounded-2xl border border-white/40 bg-white/70 px-4 py-3 font-mono text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
               />
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="mt-8 flex flex-col gap-3">
               <button
                 onClick={handleRecover}
                 disabled={!privateKeyInput.trim() || loading}
-                className="w-full px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? 'Restoring...' : 'Restore Private Key'}
+                {loading ? 'Restoring...' : 'Restore private key'}
               </button>
 
               <button
                 onClick={() => setShowRegenerateOption(true)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
+                className="w-full rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
-                I don&apos;t have my private key
+                I don’t have my key
               </button>
             </div>
           </>
         ) : (
           <>
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-800 dark:text-red-200">
-                <strong>⚠️ Warning:</strong> Generating new keys will make all your existing encrypted
-                messages unreadable. Only do this if you&apos;ve lost your recovery code.
+            <div className="mt-6 rounded-2xl border border-red-200/70 bg-red-50/90 p-4 text-sm leading-relaxed text-red-700 shadow-inner dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-100">
+              <p className="font-semibold">This is irreversible</p>
+              <p className="mt-2">
+                Generating new keys preserves future security but makes previous encrypted messages unreadable. Continue only if you accept losing that history.
               </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={() => setShowRegenerateOption(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
-                Go Back
+                Go back
               </button>
               <button
                 onClick={handleRegenerate}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <RefreshCw className="w-4 h-4" />
-                {loading ? 'Generating...' : 'Generate New Keys'}
+                <span className="inline-flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  {loading ? 'Generating...' : 'Generate new keys'}
+                </span>
               </button>
             </div>
           </>

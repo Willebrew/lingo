@@ -28,148 +28,139 @@ export default function ChatLayout() {
   }, [messages, currentUser, readNotifications]);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900">
-      {/* Desktop: Icon Sidebar */}
-      <div className="hidden lg:block">
-        <div className="w-[88px] bg-gradient-to-b from-primary-600 to-primary-700 h-full flex flex-col items-center py-6 gap-4">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden">
-            <img src="/logo.png" alt="Lingo" className="w-full h-full object-cover" />
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full bg-primary-500/25 blur-[140px]" />
+        <div className="absolute top-1/3 -right-24 h-[360px] w-[360px] rounded-full bg-accent-400/20 blur-[150px]" />
+        <div className="absolute bottom-[-20%] left-1/2 h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-primary-300/20 blur-[180px]" />
+      </div>
+
+      <div className="relative z-10 flex h-screen flex-col px-4 pb-20 pt-6 sm:px-6 lg:px-10 lg:pb-8">
+        <div className="flex flex-1 gap-4 overflow-hidden">
+          {/* Desktop: Icon Sidebar */}
+          <div className="hidden lg:flex w-[96px] flex-col rounded-[30px] border border-white/30 bg-white/20 p-4 text-slate-700 shadow-subtle backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/25">
+            <div className="flex h-16 w-full items-center justify-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/40 bg-white/80 shadow-lg dark:border-white/10 dark:bg-slate-950/70">
+                <img src="/logo.png" alt="Lingo" className="h-8 w-8 rounded-xl object-cover" />
+              </div>
+            </div>
+
+            <nav className="mt-6 flex flex-1 flex-col gap-3">
+              {[
+                { id: 'messages' as ViewType, icon: MessageSquare, label: 'Messages' },
+                { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
+                { id: 'notifications' as ViewType, icon: Bell, label: 'Notifications' },
+                { id: 'settings' as ViewType, icon: Settings, label: 'Settings' },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveView(item.id)}
+                    className={`group relative flex h-14 items-center justify-center rounded-2xl border transition-all duration-200 ${
+                      isActive
+                        ? 'border-white/80 bg-white text-primary-600 shadow-lg dark:border-white/20 dark:bg-slate-950 dark:text-primary-300'
+                        : 'border-transparent bg-white/10 text-slate-500 hover:border-white/40 hover:bg-white/30 hover:text-primary-600 dark:bg-white/5 dark:text-slate-300 dark:hover:border-white/10 dark:hover:bg-white/10'
+                    }`}
+                    title={item.label}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.id === 'notifications' && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-xs font-semibold text-white shadow-lg">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                    {isActive && (
+                      <span className="absolute inset-x-3 top-1 h-1 rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-accent-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="mt-6 rounded-2xl border border-white/40 bg-white/60 px-4 py-3 text-center text-xs font-medium text-slate-500 shadow-sm dark:border-white/10 dark:bg-slate-950/60 dark:text-slate-300">
+              <p>Encrypted</p>
+              <p className="font-display text-primary-600 dark:text-primary-300">by Lingo</p>
+            </div>
           </div>
 
-          <nav className="flex-1 flex flex-col gap-3 w-full px-4">
-            <button
-              onClick={() => setActiveView('messages')}
-              className={`w-full h-14 rounded-xl flex items-center justify-center transition-all ${
-                activeView === 'messages' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <MessageSquare className="w-6 h-6" />
-            </button>
-            <button
-              onClick={() => setActiveView('contacts')}
-              className={`w-full h-14 rounded-xl flex items-center justify-center transition-all ${
-                activeView === 'contacts' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Users className="w-6 h-6" />
-            </button>
-            <button
-              onClick={() => setActiveView('notifications')}
-              className={`w-full h-14 rounded-xl flex items-center justify-center transition-all relative ${
-                activeView === 'notifications' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Bell className="w-6 h-6" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
+          {/* Desktop: Middle Panel */}
+          <div className="hidden lg:flex w-[380px] flex-col">
+            <div className="flex h-full w-full flex-col overflow-hidden rounded-[34px] border border-white/40 bg-white/75 shadow-floating backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70">
+              {activeView === 'notifications' ? (
+                <NotificationsPanel onConversationClick={() => setActiveView('messages')} />
+              ) : activeView === 'settings' ? (
+                <SettingsPanel />
+              ) : (
+                <Sidebar onClose={() => {}} initialTab={activeView as 'messages' | 'contacts'} />
               )}
-            </button>
-            <button
-              onClick={() => setActiveView('settings')}
-              className={`w-full h-14 rounded-xl flex items-center justify-center transition-all ${
-                activeView === 'settings' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Settings className="w-6 h-6" />
-            </button>
-          </nav>
-        </div>
-      </div>
+            </div>
+          </div>
 
-      {/* Desktop: Middle Panel */}
-      <div className="hidden lg:block w-[380px] border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        {activeView === 'notifications' ? (
-          <NotificationsPanel onConversationClick={() => setActiveView('messages')} />
-        ) : activeView === 'settings' ? (
-          <SettingsPanel />
-        ) : (
-          <Sidebar onClose={() => {}} initialTab={activeView as 'messages' | 'contacts'} />
-        )}
-      </div>
+          {/* Main Content Area */}
+          <div className="flex-1">
+            <div className="flex h-full flex-col overflow-hidden rounded-[38px] border border-white/30 bg-white/80 shadow-floating backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70">
+              <div className="block h-full lg:hidden">
+                {selectedConversationId ? (
+                  <ChatView />
+                ) : activeView === 'messages' || activeView === 'contacts' ? (
+                  <Sidebar onClose={() => {}} initialTab={activeView as 'messages' | 'contacts'} />
+                ) : activeView === 'notifications' ? (
+                  <NotificationsPanel onConversationClick={() => setActiveView('messages')} />
+                ) : (
+                  <SettingsPanel />
+                )}
+              </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden relative pb-16 lg:pb-0">
-        {/* Mobile: Show different views based on active tab */}
-        <div className="lg:hidden h-full">
-          {selectedConversationId ? (
-            // Show chat when conversation is selected
-            <ChatView />
-          ) : activeView === 'messages' || activeView === 'contacts' ? (
-            // Show conversations/contacts list
-            <Sidebar onClose={() => {}} initialTab={activeView as 'messages' | 'contacts'} />
-          ) : activeView === 'notifications' ? (
-            // Show notifications
-            <NotificationsPanel onConversationClick={() => setActiveView('messages')} />
-          ) : (
-            // Show settings
-            <SettingsPanel />
-          )}
-        </div>
-
-        {/* Desktop: Always show chat */}
-        <div className="hidden lg:block h-full">
-          <ChatView />
+              <div className="hidden h-full lg:block">
+                <ChatView />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Mobile: Bottom Navigation */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-inset-bottom">
-          <div className="flex items-center justify-around h-16 px-4">
-            <button
-              onClick={() => setActiveView('messages')}
-              className={`flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-colors ${
-                activeView === 'messages'
-                  ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              <MessageSquare className="w-6 h-6" />
-              <span className="text-xs font-medium">Messages</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('contacts')}
-              className={`flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-colors ${
-                activeView === 'contacts'
-                  ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              <Users className="w-6 h-6" />
-              <span className="text-xs font-medium">Contacts</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('notifications')}
-              className={`flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-colors relative ${
-                activeView === 'notifications'
-                  ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              <div className="relative">
-                <Bell className="w-6 h-6" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </div>
-              <span className="text-xs font-medium">Alerts</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('settings')}
-              className={`flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-colors ${
-                activeView === 'settings'
-                  ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              <Settings className="w-6 h-6" />
-              <span className="text-xs font-medium">Settings</span>
-            </button>
+        <div className="lg:hidden">
+          <div className="fixed bottom-4 left-1/2 z-30 w-[92%] max-w-md -translate-x-1/2 rounded-full border border-white/50 bg-white/70 px-4 py-3 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70">
+            <div className="flex items-center justify-between">
+              {[
+                { id: 'messages' as ViewType, icon: MessageSquare, label: 'Messages' },
+                { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
+                { id: 'notifications' as ViewType, icon: Bell, label: 'Alerts' },
+                { id: 'settings' as ViewType, icon: Settings, label: 'Settings' },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveView(item.id)}
+                    className={`relative flex flex-1 flex-col items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+                      isActive
+                        ? 'text-primary-600'
+                        : 'text-slate-400 hover:text-primary-500'
+                    }`}
+                  >
+                    <span
+                      className={`relative flex h-10 w-10 items-center justify-center rounded-2xl border text-sm transition ${
+                        isActive
+                          ? 'border-primary-500/50 bg-primary-500/15 text-primary-600'
+                          : 'border-transparent bg-white/40 text-slate-500 dark:bg-white/10 dark:text-slate-300'
+                      }`}
+                    >
+                      <Icon className="h-[18px] w-[18px]" />
+                      {item.id === 'notifications' && unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent-500 text-[10px] text-white">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </span>
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

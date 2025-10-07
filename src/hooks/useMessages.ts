@@ -86,20 +86,7 @@ export function useMessages(conversationId: string | null) {
     content: string,
     conversation: any
   ) => {
-    console.log('[useMessages] Starting message send...', {
-      hasCurrentUser: !!currentUser,
-      hasConversationId: !!conversationId,
-      hasUserPassword: !!userPassword,
-      conversationId,
-      participants: conversation?.participants
-    });
-
     if (!currentUser || !conversationId || !userPassword) {
-      console.error('[useMessages] Missing required data:', {
-        hasCurrentUser: !!currentUser,
-        hasConversationId: !!conversationId,
-        hasUserPassword: !!userPassword
-      });
       throw new Error('Missing required authentication data');
     }
 
@@ -115,10 +102,8 @@ export function useMessages(conversationId: string | null) {
       for (const participantId of conversation.participants) {
         const participantPublicKey = conversation.participantDetails[participantId]?.publicKey;
         if (!participantPublicKey) {
-          console.error('[useMessages] Missing public key for participant:', participantId);
           throw new Error(`Missing public key for participant ${participantId}`);
         }
-        console.log(`[useMessages] Encrypting for participant ${participantId}...`);
         encryptedContent[participantId] = encryptMessage(
           content,
           participantPublicKey,
@@ -126,33 +111,20 @@ export function useMessages(conversationId: string | null) {
         );
       }
 
-      console.log('[useMessages] Sending to Firestore...', {
-        conversationId,
-        senderId: currentUser.id,
-        encryptedForParticipants: Object.keys(encryptedContent)
-      });
-
       await dbSendMessage(
         conversationId,
         currentUser.id,
         currentUser.displayName,
         encryptedContent
       );
-
-      console.log('[useMessages] Message sent successfully!');
     } catch (error) {
-      console.error('[useMessages] Error sending message:', error);
-      console.error('[useMessages] Error details:', {
-        name: (error as Error).name,
-        message: (error as Error).message,
-        stack: (error as Error).stack
-      });
+      console.error('Error sending message:', error);
       throw error;
     }
   };
 
   const translateMessage = async (messageId: string, targetLanguage: string) => {
-    if (!conversationId) return;
+    if (!conversationId || !currentUser) return;
 
     const conversationMessages = messages[conversationId] || [];
     const message = conversationMessages.find((m) => m.id === messageId);
@@ -163,14 +135,30 @@ export function useMessages(conversationId: string | null) {
     addTranslatingMessage(messageId);
 
     try {
+      // Get Firebase Auth token
+      const { auth } = await import('@/lib/firebase');
+      const token = await auth.currentUser?.getIdToken();
+
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch('/api/translate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           text: message.content,
           targetLanguage,
         }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Translation failed');
+      }
 
       const data = await response.json();
 
@@ -185,6 +173,9 @@ export function useMessages(conversationId: string | null) {
       }
     } catch (error) {
       console.error('Translation failed:', error);
+      // Show error to user
+      const toast = (await import('react-hot-toast')).default;
+      toast.error(error instanceof Error ? error.message : 'Translation failed');
     } finally {
       // Remove from translating state
       removeTranslatingMessage(messageId);

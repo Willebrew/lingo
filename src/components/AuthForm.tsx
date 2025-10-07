@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useStore } from '@/store/useStore';
-import { Lock } from 'lucide-react';
+import { Lock, ShieldCheck, Sparkles, Languages } from 'lucide-react';
 import toast from 'react-hot-toast';
 import RecoveryCodeModal from './RecoveryCodeModal';
 import Image from 'next/image';
@@ -90,133 +90,216 @@ export default function AuthForm({ onRecoveryModalChange }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-primary-500/30 blur-[140px]" />
+        <div className="absolute top-32 -right-32 h-[420px] w-[420px] rounded-full bg-accent-400/25 blur-[160px]" />
+        <div className="absolute -bottom-48 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-primary-300/20 blur-[160px]" />
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col items-center justify-center px-6 py-16 lg:flex-row lg:items-start lg:py-24"
       >
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 200 }}
-              className="inline-flex items-center justify-center mb-4"
-            >
-              <Image
-                src="/logo.png"
-                alt="Lingo"
-                width={64}
-                height={64}
-                className="rounded-xl"
-              />
-            </motion.div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Lingo
+        <div className="flex w-full flex-1 flex-col items-center gap-10 lg:items-start">
+          <div className="max-w-xl text-center lg:text-left">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 shadow-sm backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5" />
+              Private preview
+            </span>
+            <h1 className="mt-6 text-4xl font-display text-slate-900 dark:text-white sm:text-5xl">
+              Conversations that sound natural,
+              <span className="text-primary-600"> instantly translated</span>.
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 flex items-center justify-center gap-2">
-              <Lock className="w-4 h-4" />
-              End-to-end encrypted messaging
+            <p className="mt-5 text-base leading-relaxed text-slate-600 dark:text-slate-300">
+              Lingo keeps your chats beautifully secure while making every message feel personal. Share moments, collaborate across languages, and stay in sync without compromising privacy.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignUp && (
-              <>
+          <div className="grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl border border-white/40 bg-white/70 p-5 shadow-lg backdrop-blur xl:p-6 dark:border-white/10 dark:bg-slate-950/60">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600">
+                  <Lock className="h-5 w-5" />
+                </span>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
-                    required={isSignUp}
-                  />
+                  <p className="font-display text-lg text-slate-900 dark:text-white">End-to-end first</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Every word is encrypted before it leaves your device.</p>
                 </div>
-
+              </div>
+            </div>
+            <div className="rounded-3xl border border-white/40 bg-white/70 p-5 shadow-lg backdrop-blur xl:p-6 dark:border-white/10 dark:bg-slate-950/60">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-600">
+                  <Languages className="h-5 w-5" />
+                </span>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Preferred Language
-                  </label>
-                  <select
-                    value={preferredLanguage}
-                    onChange={(e) => setPreferredLanguage(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
-                  >
-                    {LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Messages will be auto-translated to this language
-                  </p>
+                  <p className="font-display text-lg text-slate-900 dark:text-white">Live translation</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Pick a preferred language and we handle the rest.</p>
                 </div>
-              </>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
-                required
-              />
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
-                required
-              />
+            <div className="rounded-3xl border border-white/40 bg-white/70 p-5 shadow-lg backdrop-blur xl:p-6 dark:border-white/10 dark:bg-slate-950/60">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600">
+                  <ShieldCheck className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-display text-lg text-slate-900 dark:text-white">Recovery ready</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Safeguard your keys with elegant recovery workflows.</p>
+                </div>
+              </div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              {isSignUp
-                ? 'Already have an account? Sign in'
-                : "Don't have an account? Sign up"}
-            </button>
+            <div className="rounded-3xl border border-white/40 bg-white/70 p-5 shadow-lg backdrop-blur xl:p-6 dark:border-white/10 dark:bg-slate-950/60">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-600">
+                  <Image src="/logo.png" alt="Lingo" width={32} height={32} className="rounded-xl" />
+                </span>
+                <div>
+                  <p className="font-display text-lg text-slate-900 dark:text-white">Made for teams</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Group spaces that feel high-touch and beautifully minimal.</p>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div className="relative mt-14 w-full max-w-lg lg:mt-0">
+          <div className="absolute -inset-x-4 -top-8 bottom-12 rounded-[40px] bg-gradient-to-br from-primary-500/20 via-transparent to-accent-400/20 blur-3xl" />
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.6, ease: 'easeOut' }}
+            className="relative rounded-[32px] border border-white/40 bg-white/80 p-10 shadow-floating backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70"
+          >
+            <div className="mb-8 text-center">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary-600">
+                Say hello
+              </span>
+              <h2 className="mt-4 text-3xl font-display text-slate-900 dark:text-white">
+                {isSignUp ? 'Create your account' : 'Welcome back'}
+              </h2>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                {isSignUp ? 'Join the beta to start secure multilingual conversations.' : 'Sign in to continue your private conversations.'}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {isSignUp && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-[.18em] text-slate-500 dark:text-slate-400">
+                      Display name
+                    </label>
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
+                      placeholder="Alex Johnson"
+                      required={isSignUp}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-[.18em] text-slate-500 dark:text-slate-400">
+                      Preferred language
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={preferredLanguage}
+                        onChange={(e) => setPreferredLanguage(e.target.value)}
+                        className="w-full appearance-none rounded-2xl border border-white/50 bg-white/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
+                      >
+                        {LANGUAGES.map((lang) => (
+                          <option key={lang.code} value={lang.code}>
+                            {lang.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500/80 dark:text-slate-400/80">
+                      Messages will be translated to this language by default.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-[.18em] text-slate-500 dark:text-slate-400">
+                  Email address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
+                  placeholder="you@company.com"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-[.18em] text-slate-500 dark:text-slate-400">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-tr from-primary-600 via-primary-500 to-accent-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition focus:outline-none focus:ring-4 focus:ring-primary-300/60 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 ease-out group-hover:translate-y-0" />
+                <span className="relative">
+                  {loading ? 'Just a sec…' : isSignUp ? 'Join Lingo' : 'Sign in'}
+                </span>
+              </button>
+            </form>
+
+            <div className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              {isSignUp ? 'Already have an account?' : "New here?"}{' '}
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="font-semibold text-primary-600 underline-offset-4 transition hover:underline dark:text-primary-400"
+              >
+                {isSignUp ? 'Sign in instead' : 'Create one'}
+              </button>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
 
-      {/* Recovery Code Modal */}
       {recoveryCode && (
         <RecoveryCodeModal
           recoveryCode={recoveryCode}
           onConfirm={() => {
             setRecoveryCode(null);
             onRecoveryModalChange?.(false);
-            // Reset signup flag and set current user to complete signup
             setIsSigningUp(false);
             if (pendingUserData) {
               setCurrentUser(pendingUserData);

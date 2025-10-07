@@ -27,12 +27,8 @@ export function useAuth() {
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setCurrentUser(userDoc.data() as User);
-
-          // Restore password from sessionStorage if available
-          const storedPassword = sessionStorage.getItem(`lingo_session_${firebaseUser.uid}`);
-          if (storedPassword) {
-            setUserPassword(storedPassword);
-          }
+          // Password is kept in memory only, not persisted for security
+          // Users will need to re-login if page is refreshed
         }
       } else {
         setCurrentUser(null);
@@ -83,12 +79,8 @@ export function useAuth() {
       // Store encrypted private key and get recovery code
       const recoveryCode = await storePrivateKey(user.uid, privateKey, password);
 
-      // Store password in memory and sessionStorage for this session
+      // Store password in memory ONLY (not sessionStorage for security)
       setUserPassword(password);
-      sessionStorage.setItem(`lingo_session_${user.uid}`, password);
-      console.log('[useAuth] Password stored in sessionStorage for user:', user.uid);
-      console.log('[useAuth] Recovery code generated:', recoveryCode);
-      console.log('[useAuth] User data prepared:', userData);
 
       // DON'T set current user yet - let the recovery code modal show first
       // The AuthForm will set the user after the modal is dismissed
@@ -107,17 +99,14 @@ export function useAuth() {
       const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
 
       if (userDoc.exists()) {
-        // Store password in memory and sessionStorage for this session
+        // Store password in memory ONLY (not sessionStorage for security)
         setUserPassword(password);
-        sessionStorage.setItem(`lingo_session_${userCredential.user.uid}`, password);
-        console.log('[useAuth] Sign-in successful, password stored for user:', userCredential.user.uid);
         setCurrentUser(userDoc.data() as User);
         return { success: true };
       }
 
       // User exists in Auth but not in Firestore (orphaned from failed deletion)
       // Delete the auth user and tell them to create a new account
-      console.log('[useAuth] Orphaned auth user detected, cleaning up...');
       const { deleteUser } = await import('firebase/auth');
       await deleteUser(userCredential.user);
       return { success: false, error: 'Account data was corrupted. Please create a new account.' };
@@ -130,8 +119,6 @@ export function useAuth() {
     try {
       if (auth.currentUser) {
         removePrivateKey(auth.currentUser.uid);
-        // Clear session password
-        sessionStorage.removeItem(`lingo_session_${auth.currentUser.uid}`);
       }
       await firebaseSignOut(auth);
       setCurrentUser(null);

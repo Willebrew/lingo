@@ -3,8 +3,39 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --surface-base: #f6f7ff;
+    --surface-card: rgba(255, 255, 255, 0.72);
+    --surface-stroke: rgba(124, 139, 255, 0.18);
+    --aurora-one: rgba(122, 91, 255, 0.16);
+    --aurora-two: rgba(45, 212, 191, 0.16);
+    --aurora-three: rgba(37, 99, 235, 0.14);
+    color-scheme: light;
+  }
+
+  .dark {
+    --surface-base: #070b1d;
+    --surface-card: rgba(8, 12, 29, 0.72);
+    --surface-stroke: rgba(96, 165, 250, 0.14);
+    --aurora-one: rgba(99, 102, 241, 0.22);
+    --aurora-two: rgba(45, 212, 191, 0.18);
+    --aurora-three: rgba(56, 189, 248, 0.18);
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors;
+    @apply text-slate-900 dark:text-slate-100 transition-colors duration-300 ease-out min-h-screen;
+    background-color: var(--surface-base);
+    background-image:
+      radial-gradient(160% 160% at 0% 0%, var(--aurora-one) 0%, rgba(122, 91, 255, 0) 60%),
+      radial-gradient(140% 140% at 100% 0%, var(--aurora-two) 0%, rgba(45, 212, 191, 0) 55%),
+      radial-gradient(120% 120% at 50% 100%, var(--aurora-three) 0%, rgba(37, 99, 235, 0) 60%),
+      linear-gradient(180deg, var(--surface-base) 0%, rgba(236, 242, 255, 0.7) 35%, rgba(237, 247, 255, 0.4) 100%);
+    background-attachment: fixed;
+  }
+
+  * {
+    @apply selection:bg-primary-200 selection:text-primary-900 dark:selection:bg-primary-700/70 dark:selection:text-white;
   }
 }
 

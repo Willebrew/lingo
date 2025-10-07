@@ -80,7 +80,7 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
@@ -88,45 +88,63 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md"
+          className="w-full max-w-xl rounded-[30px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">New Conversation</h2>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 via-primary-400 to-accent-400 text-white shadow-lg">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-display text-slate-900 dark:text-white">New conversation</h2>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Select one or more contacts to start chatting together.
+                </p>
+              </div>
+            </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/70 text-slate-500 transition hover:text-slate-800 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+              aria-label="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
           {contacts.length === 0 ? (
-            <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-              <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm mb-1">No contacts yet</p>
-              <p className="text-xs">Add a contact first to start a conversation</p>
+            <div className="mt-8 flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/40 px-6 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+              <Users className="mb-4 h-12 w-12 text-primary-400" />
+              <p className="font-semibold">No contacts yet</p>
+              <p className="mt-2 text-sm text-slate-500/80 dark:text-slate-400/80">
+                Add a contact first to open a conversation.
+              </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
-                  Select Contacts {selectedContactIds.size > 0 && `(${selectedContactIds.size} selected)`}
-                </label>
-                <div className="max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+              <div>
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                  <span>Select contacts</span>
+                  {selectedContactIds.size > 0 && (
+                    <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-600 dark:bg-primary-500/20 dark:text-primary-300">
+                      {selectedContactIds.size} selected
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 max-h-64 overflow-y-auto rounded-3xl border border-white/40 bg-white/60 p-1 shadow-inner scrollbar-thin dark:border-white/10 dark:bg-slate-900/60">
                   {contacts.map((contact) => (
                     <label
                       key={contact.id}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-0"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-600 transition hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
                     >
                       <input
                         type="checkbox"
                         checked={selectedContactIds.has(contact.id)}
                         onChange={() => toggleContact(contact.id)}
-                        className="w-4 h-4 text-primary-500 rounded focus:ring-2 focus:ring-primary-500"
+                        className="h-4 w-4 rounded border-white/40 text-primary-500 focus:ring-2 focus:ring-primary-400 dark:border-white/20"
                       />
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{contact.displayName}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{contact.email}</p>
+                        <p className="font-medium text-slate-700 dark:text-slate-200">{contact.displayName}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{contact.email}</p>
                       </div>
                     </label>
                   ))}
@@ -136,9 +154,13 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
               <button
                 type="submit"
                 disabled={loading || selectedContactIds.size === 0}
-                className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? 'Creating...' : selectedContactIds.size > 1 ? 'Create Group Chat' : 'Start Conversation'}
+                {loading
+                  ? 'Creating…'
+                  : selectedContactIds.size > 1
+                  ? 'Create group chat'
+                  : 'Start conversation'}
               </button>
             </form>
           )}

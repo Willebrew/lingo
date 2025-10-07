@@ -3,16 +3,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/useStore';
-import { useAuth } from '@/hooks/useAuth';
 import { useConversations } from '@/hooks/useConversations';
 import { useContacts } from '@/hooks/useContacts';
-import { useTheme } from '@/hooks/useTheme';
 import { findOrCreateConversation } from '@/lib/db';
-import { MessageSquare, Plus, X, Users, User, Trash2, UserPlus, Search } from 'lucide-react';
+import { MessageSquare, Plus, X, Users, Trash2, UserPlus, Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import NewConversationModal from './NewConversationModal';
-import Image from 'next/image';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -23,8 +20,6 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
   const { currentUser, selectedConversationId, setSelectedConversationId } = useStore();
   const { conversations } = useConversations();
   const { contacts, addContact, removeContact } = useContacts();
-  const { signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { deleteConversation } = useConversations();
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'contacts'>(initialTab);
@@ -34,19 +29,10 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
     setActiveTab(initialTab);
   }, [initialTab]);
   const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
-  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [addingContact, setAddingContact] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSignOut = async () => {
-    const result = await signOut();
-    if (result.success) {
-      toast.success('Signed out successfully');
-    }
-  };
 
   const getConversationName = (conv: any) => {
     // If conversation has a custom name, use it
@@ -92,81 +78,6 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!currentUser) return;
-
-    try {
-      setIsDeleting(true);
-
-      console.log('[Sidebar] Starting account deletion...');
-      const { auth, db } = await import('@/lib/firebase');
-      const { doc, deleteDoc, updateDoc, arrayRemove } = await import('firebase/firestore');
-      const { deleteUser, reauthenticateWithPopup, EmailAuthProvider, GoogleAuthProvider } = await import('firebase/auth');
-
-      console.log('[Sidebar] Checking auth...');
-      if (!auth.currentUser) {
-        throw new Error('Not authenticated');
-      }
-
-      // Step 0: Test if we can delete auth user WITHOUT actually deleting it
-      // We do this by checking the token age
-      console.log('[Sidebar] Checking if re-authentication is needed...');
-      const metadata = auth.currentUser.metadata;
-      const lastSignInTime = metadata.lastSignInTime ? new Date(metadata.lastSignInTime).getTime() : 0;
-      const now = Date.now();
-      const fiveMinutes = 5 * 60 * 1000;
-
-      // If last sign-in was more than 5 minutes ago, require re-auth
-      if (now - lastSignInTime > fiveMinutes) {
-        console.log('[Sidebar] Recent login required (last sign-in was too long ago)');
-        toast.error('For security, please sign out and sign back in, then try deleting your account again.');
-        setIsDeleting(false);
-        return;
-      }
-
-      // Step 1: Clean up conversations while we still have auth
-      console.log('[Sidebar] Processing conversations...');
-      for (const conv of conversations) {
-        if (conv.participants.length === 1) {
-          console.log(`[Sidebar] Deleting conversation ${conv.id} (user is only participant)`);
-          await deleteConversation(conv.id);
-        } else if (conv.participants.length === 2) {
-          console.log(`[Sidebar] Deleting conversation ${conv.id} (would leave only 1 participant)`);
-          await deleteConversation(conv.id);
-        } else {
-          console.log(`[Sidebar] Removing user from conversation ${conv.id}`);
-          await updateDoc(doc(db, 'conversations', conv.id), {
-            participants: arrayRemove(currentUser.id),
-            [`participantDetails.${currentUser.id}`]: null
-          });
-        }
-      }
-
-      // Step 2: Delete user document from Firestore (while we still have auth)
-      console.log('[Sidebar] Deleting user document from Firestore...');
-      await deleteDoc(doc(db, 'users', currentUser.id));
-
-      // Step 3: Delete user from Firebase Auth (do this last)
-      console.log('[Sidebar] Deleting user from Firebase Auth...');
-      await deleteUser(auth.currentUser);
-
-      console.log('[Sidebar] Account deletion complete');
-      toast.success('Account deleted successfully');
-      setShowDeleteAccount(false);
-      // User will be automatically signed out when auth user is deleted
-    } catch (error: any) {
-      console.error('Error deleting account:', error);
-
-      // Handle re-authentication required error
-      if (error.code === 'auth/requires-recent-login') {
-        toast.error('Please sign out and sign back in, then try deleting your account again.');
-      } else {
-        toast.error('Failed to delete account: ' + (error.message || 'Unknown error'));
-      }
-      setIsDeleting(false);
-    }
-  };
-
   const handleAddContact = async () => {
     if (!contactEmail.trim()) return;
 
@@ -198,121 +109,152 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
     contact.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredConversations = conversations.filter((conv) =>
+    getConversationName(conv).toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
-      {/* New Conversation Button */}
-      <div className="p-4">
-        <button
-          onClick={() => setShowNewConversation(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          New Conversation
-        </button>
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="px-6 pt-7">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">Inbox</p>
+            <h2 className="mt-3 text-2xl font-display text-slate-900 dark:text-white">Your spaces</h2>
+          </div>
+          <button
+            onClick={() => setShowNewConversation(true)}
+            className="group relative overflow-hidden rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-lg transition focus:outline-none focus:ring-4 focus:ring-primary-300/50"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Start chat
+            </span>
+            <span className="absolute inset-0 translate-y-full bg-white/25 transition-transform duration-300 ease-out group-hover:translate-y-0" />
+          </button>
+        </div>
+
+        <div className="mt-6 inline-flex rounded-full border border-white/50 bg-white/70 p-1 text-xs font-semibold shadow-sm dark:border-white/10 dark:bg-slate-900/50">
+          {(['messages', 'contacts'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`rounded-full px-4 py-1.5 transition ${
+                activeTab === tab
+                  ? 'bg-white text-primary-600 shadow dark:bg-slate-900/80 dark:text-primary-300'
+                  : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-300'
+              }`}
+            >
+              {tab === 'messages' ? 'Messages' : 'Contacts'}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="px-4 pb-3">
+      <div className="px-6 pb-4 pt-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search conversations or contacts"
+            placeholder={activeTab === 'messages' ? 'Search conversations' : 'Search contacts'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 border-0 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
+            className="w-full rounded-full border border-white/40 bg-white/70 py-3 pl-11 pr-5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
           />
         </div>
       </div>
 
-      {/* Content - Conditionally render based on active tab */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin">
+      <div className="flex-1 overflow-y-auto px-6 pb-6 pt-2 scrollbar-thin">
         {activeTab === 'messages' ? (
-          /* Conversations View */
-          <div>
+          <div className="space-y-3">
             {conversations.length === 0 ? (
-              <div className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
-                <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="text-sm font-medium">No conversations yet</p>
-                <p className="text-xs mt-1">Start a new conversation to get started</p>
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/40 px-6 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+                <MessageSquare className="mb-4 h-12 w-12 text-primary-400" />
+                <p className="font-semibold">No conversations yet</p>
+                <p className="mt-1 text-sm text-slate-500/80 dark:text-slate-400/80">Start a new conversation to get going.</p>
+              </div>
+            ) : filteredConversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/40 px-6 py-10 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+                <Search className="mb-4 h-10 w-10 text-primary-400" />
+                <p className="font-semibold">No matches</p>
+                <p className="mt-1 text-sm text-slate-500/80 dark:text-slate-400/80">Try a different keyword.</p>
               </div>
             ) : (
-              <div className="px-2">
-                {conversations.map((conv) => (
-                  <div key={conv.id} className="relative group">
-                    <button
-                      onClick={() => {
-                        setSelectedConversationId(conv.id);
-                        onClose?.();
-                      }}
-                      className={`w-full p-3 pr-12 rounded-lg text-left transition-colors mb-1 ${
-                        selectedConversationId === conv.id
-                          ? 'bg-primary-50 dark:bg-primary-900/20'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+              filteredConversations.map((conv) => {
+                  const isSelected = selectedConversationId === conv.id;
+                  return (
+                    <div key={conv.id} className="group relative">
+                      <button
+                        onClick={() => {
+                          setSelectedConversationId(conv.id);
+                          onClose?.();
+                        }}
+                        className={`relative flex w-full items-start gap-4 overflow-hidden rounded-3xl border px-4 py-4 text-left shadow-sm transition ${
+                          isSelected
+                            ? 'border-primary-400/50 bg-primary-500/10 shadow-lg ring-1 ring-primary-500/30 dark:border-primary-400/30 dark:bg-primary-900/20'
+                            : 'border-transparent bg-white/60 hover:border-white/60 hover:bg-white/80 dark:bg-slate-950/40 dark:hover:border-white/10 dark:hover:bg-slate-950/60'
+                        }`}
+                      >
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/30 text-base font-semibold text-primary-600 dark:text-primary-300">
                           {getConversationName(conv).charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate mb-1">
-                            {getConversationName(conv)}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-4">
+                            <p className="font-display text-base text-slate-900 dark:text-white">
+                              {getConversationName(conv)}
+                            </p>
+                            {conv.lastMessageAt && (
+                              <span className="flex-shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                                {formatDistanceToNow(conv.lastMessageAt, { addSuffix: true }).replace('about ', '')}
+                              </span>
+                            )}
+                          </div>
                           {conv.lastMessage && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
                               {conv.lastMessage}
                             </p>
                           )}
-                          {conv.lastMessageAt && (
-                            <span className="text-[10px] text-gray-400 dark:text-gray-500 block mt-0.5">
-                              {formatDistanceToNow(conv.lastMessageAt, { addSuffix: true }).replace('about ', '')}
-                            </span>
-                          )}
                         </div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteConversation(conv.id, e)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                        <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400/10 to-primary-500/20 opacity-0 transition group-hover:opacity-100" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteConversation(conv.id, e)}
+                        className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl border border-red-100 bg-white/80 text-red-500 opacity-0 shadow-sm transition hover:bg-red-50 group-hover:opacity-100 dark:border-red-500/20 dark:bg-red-500/10 dark:hover:bg-red-500/20"
+                        title="Delete conversation"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  );
+                })
             )}
           </div>
         ) : (
-          /* Contacts View */
-          <div>
-            <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Your Contacts
-              </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">
+              <span>Your contacts</span>
               <button
                 onClick={() => setShowAddContact(true)}
-                className="text-xs text-primary-500 hover:text-primary-600 font-medium flex items-center gap-1"
+                className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/70 px-3 py-1 text-[11px] font-semibold text-primary-600 transition hover:bg-primary-500/10 dark:border-white/10 dark:bg-slate-900/60 dark:text-primary-300"
               >
-                <UserPlus className="w-3.5 h-3.5" />
-                Add Contact
+                <UserPlus className="h-3.5 w-3.5" />
+                Add
               </button>
             </div>
 
             {filteredContacts.length === 0 ? (
-              <div className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
-                <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="text-sm font-medium">
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/40 px-6 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+                <Users className="mb-4 h-12 w-12 text-accent-400" />
+                <p className="font-semibold">
                   {searchQuery ? 'No contacts found' : 'No contacts yet'}
                 </p>
-                <p className="text-xs mt-1">
-                  {searchQuery ? 'Try a different search term' : 'Add contacts to start chatting'}
+                <p className="mt-1 text-sm text-slate-500/80 dark:text-slate-400/80">
+                  {searchQuery ? 'Try another search term.' : 'Add contacts to start sharing moments.'}
                 </p>
               </div>
             ) : (
-              <div className="p-4 grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {filteredContacts.map((contact) => (
-                  <div key={contact.id} className="group relative">
+                  <div key={contact.id} className="group relative overflow-hidden rounded-3xl border border-transparent bg-white/60 p-4 text-center shadow-sm transition hover:border-white/60 hover:bg-white/80 dark:bg-slate-950/40 dark:hover:border-white/10 dark:hover:bg-slate-950/60">
                     <button
                       onClick={async () => {
                         if (!currentUser) return;
@@ -325,32 +267,32 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                           toast.error('Failed to start conversation');
                         }
                       }}
-                      className="w-full flex flex-col items-center p-3 rounded-xl text-center transition-all hover:bg-blue-50 dark:hover:bg-blue-900/10 border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800"
+                      className="flex w-full flex-col items-center gap-3"
                     >
-                      <div className="relative mb-2">
-                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-sm">
+                      <div className="relative">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-400/30 to-primary-500/30 text-lg font-bold text-primary-600 shadow-sm dark:text-primary-200">
                           {contact.displayName.charAt(0).toUpperCase()}
                         </div>
                         {contact.status === 'online' && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full" />
+                          <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-400 shadow-sm dark:border-slate-950" />
                         )}
                       </div>
-                      <p className="font-semibold text-sm truncate w-full text-gray-900 dark:text-gray-100">
-                        {contact.displayName}
-                      </p>
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate w-full">
-                        {contact.email}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="font-display text-sm text-slate-900 dark:text-white">
+                          {contact.displayName}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{contact.email}</p>
+                      </div>
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRemoveContact(contact.id, contact.displayName);
                       }}
-                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1.5 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg shadow-sm transition-all"
+                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-white/80 text-red-500 opacity-0 shadow-sm transition hover:bg-red-50 group-hover:opacity-100 dark:border-red-500/20 dark:bg-red-500/10 dark:hover:bg-red-500/20"
                       title="Remove contact"
                     >
-                      <Trash2 className="w-3 h-3 text-red-600 dark:text-red-400" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
@@ -367,33 +309,42 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
 
       {/* Delete Conversation Confirmation */}
       {deletingConvId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full"
+            className="w-full max-w-md rounded-[26px] border border-white/30 bg-white/85 p-7 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-white" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
+                <Trash2 className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-bold">Delete Conversation?</h3>
+              <div>
+                <h3 className="text-xl font-display text-slate-900 dark:text-white">Delete conversation?</h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  This removes messages for everyone in the thread.
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              This will delete the conversation for all participants. This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
+
+            <div className="mt-6 rounded-2xl border border-red-200/80 bg-red-50/90 p-4 text-sm text-red-700 shadow-inner dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-100">
+              <p>
+                <strong>Heads up:</strong> This action is permanent. Once deleted, no one will be able to recover this history.
+              </p>
+            </div>
+
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setDeletingConvId(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                className="flex-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
               >
-                Delete
+                Delete for everyone
               </button>
             </div>
           </motion.div>
@@ -402,41 +353,44 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
 
       {/* Delete Account Confirmation */}
       {showDeleteAccount && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                <UserX className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
+                <UserX className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">Delete Account?</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">This action is permanent</p>
+                <h3 className="text-2xl font-display text-slate-900 dark:text-white">Delete account?</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Your history, keys, and encrypted messages will be removed for good.
+                </p>
               </div>
             </div>
 
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-800 dark:text-red-200">
-                <strong>⚠️ Warning:</strong> This will permanently delete your account, all conversations, and encrypted messages. This action cannot be undone.
+            <div className="mt-6 rounded-2xl border border-red-200/70 bg-red-50/90 p-5 text-sm leading-relaxed text-red-700 shadow-inner dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-100">
+              <p className="font-semibold">⚠️ Important:</p>
+              <p className="mt-2">
+                This permanently deletes your profile, encrypted keys, recovery codes, and every conversation—no one will be able to retrieve them afterwards.
               </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={() => setShowDeleteAccount(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
-                Cancel
+                Keep my account
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isDeleting ? 'Deleting...' : 'Delete Account'}
+                {isDeleting ? 'Deleting…' : 'Delete forever'}
               </button>
             </div>
           </motion.div>
@@ -445,24 +399,26 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
 
       {/* Add Contact Modal */}
       {showAddContact && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 via-primary-400 to-accent-400 text-white shadow-lg">
+                <UserPlus className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">Add Contact</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Add someone by their email</p>
+                <h3 className="text-2xl font-display text-slate-900 dark:text-white">Add a contact</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Invite teammates or friends by email.</p>
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Email Address</label>
+            <div className="mt-6">
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                Email address
+              </label>
               <input
                 type="email"
                 value={contactEmail}
@@ -473,27 +429,27 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                   }
                 }}
                 placeholder="friend@example.com"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                className="mt-2 w-full rounded-2xl border border-white/40 bg-white/70 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
                 autoFocus
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={() => {
                   setShowAddContact(false);
                   setContactEmail('');
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddContact}
                 disabled={!contactEmail.trim() || addingContact}
-                className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {addingContact ? 'Adding...' : 'Add Contact'}
+                {addingContact ? 'Adding…' : 'Add contact'}
               </button>
             </div>
           </motion.div>

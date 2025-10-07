@@ -56,61 +56,60 @@ export default function NotificationsPanel({ onConversationClick }: Notification
   };
 
   return (
-    <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-2xl font-bold">Notifications</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
+    <div className="flex h-full flex-col">
+      <div className="border-b border-white/30 px-6 py-6 dark:border-white/10">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">Activity</p>
+        <h1 className="mt-3 text-2xl font-display text-slate-900 dark:text-white">Notifications</h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          {notifications.length === 0
+            ? 'You’re up to date — we’ll notify you when something happens.'
+            : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''} waiting for you.`}
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
         {notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-              <Bell className="w-8 h-8 text-gray-400" />
+          <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/50 px-8 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-400">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-500">
+              <Bell className="h-7 w-7" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No notifications</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              You're all caught up! New message notifications will appear here.
+            <h3 className="text-xl font-display text-slate-900 dark:text-white">All quiet for now</h3>
+            <p className="mt-2 text-sm text-slate-500/80 dark:text-slate-400/80">
+              Check back when new messages arrive — they’ll surface here instantly.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
+          <div className="space-y-4">
             {notifications.map((notification, index) => (
               <motion.button
                 key={notification.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: index * 0.04 }}
                 onClick={() => handleNotificationClick(notification)}
-                className="w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                className="flex w-full flex-col gap-3 rounded-3xl border border-white/40 bg-white/80 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-white/70 hover:shadow-lg hover:shadow-primary-500/10 focus:outline-none dark:border-white/10 dark:bg-slate-950/70"
               >
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {notification.senderName.charAt(0).toUpperCase()}
-                    </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/25 to-accent-400/20 text-base font-semibold text-primary-600 shadow-sm dark:text-primary-200">
+                    {notification.senderName.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-display text-sm text-slate-900 dark:text-white">
                         {notification.senderName}
                       </p>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-slate-400 dark:text-slate-500">
                         {formatDistanceToNow(notification.timestamp, { addSuffix: true }).replace('about ', '')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                    <p className="mt-1 text-sm text-slate-600 line-clamp-2 dark:text-slate-400">
                       {notification.message}
                     </p>
-                    <div className="flex items-center gap-1 mt-2">
-                      <MessageSquare className="w-3 h-3 text-gray-400" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        New message
-                      </span>
-                    </div>
                   </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-medium text-primary-600 dark:text-primary-300">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  New message
                 </div>
               </motion.button>
             ))}

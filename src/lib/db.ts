@@ -100,14 +100,6 @@ export async function sendMessage(
   encryptedContent: { [recipientId: string]: string },
   isSystemMessage: boolean = false
 ): Promise<string> {
-  console.log('[db] Preparing message document...', {
-    conversationId,
-    senderId,
-    senderName,
-    encryptedForParticipants: Object.keys(encryptedContent),
-    isSystemMessage
-  });
-
   const messageData: Omit<Message, 'id'> = {
     conversationId,
     senderId,
@@ -118,26 +110,17 @@ export async function sendMessage(
   };
 
   try {
-    console.log('[db] Adding message to Firestore...');
     const docRef = await addDoc(collection(db, 'messages'), messageData);
-    console.log('[db] Message added successfully with ID:', docRef.id);
 
     // Update conversation's last message info
-    console.log('[db] Updating conversation lastMessage...');
     await updateDoc(doc(db, 'conversations', conversationId), {
       lastMessage: 'New message',
       lastMessageAt: Date.now(),
     });
-    console.log('[db] Conversation updated successfully');
 
     return docRef.id;
   } catch (error) {
-    console.error('[db] Failed to send message:', error);
-    console.error('[db] Error details:', {
-      name: (error as Error).name,
-      message: (error as Error).message,
-      code: (error as any).code
-    });
+    console.error('Failed to send message:', error);
     throw error;
   }
 }

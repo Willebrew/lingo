@@ -101,202 +101,185 @@ export default function SettingsPanel() {
   };
 
   return (
-    <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Manage your preferences and account
+    <div className="flex h-full flex-col">
+      <div className="border-b border-white/30 px-6 py-6 dark:border-white/10">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">Preferences</p>
+        <h2 className="mt-3 text-2xl font-display text-slate-900 dark:text-white">Settings</h2>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          Tailor Lingo to the way you like to work and stay in control of your account.
         </p>
       </div>
 
-      {/* Settings Content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Appearance */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-            Appearance
-          </h3>
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin">
+        <section>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Appearance</h3>
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="mt-3 flex w-full items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-white/60 hover:shadow-lg hover:shadow-primary-500/10 focus:outline-none dark:border-white/10 dark:bg-slate-950/70"
           >
-            <div className="flex items-center gap-3">
-              {theme === 'light' ? (
-                <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              ) : (
-                <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              )}
-              <div className="text-left">
-                <p className="font-medium text-gray-900 dark:text-gray-100">Theme</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {theme === 'light' ? 'Light mode' : 'Dark mode'}
-                </p>
+            <div className="flex items-center gap-4">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 dark:text-primary-300">
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </span>
+              <div>
+                <p className="font-display text-lg text-slate-900 dark:text-white">Theme</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{theme === 'light' ? 'Light mode' : 'Dark mode'}</p>
               </div>
             </div>
-            <div className="text-sm text-primary-500 font-medium">Toggle</div>
+            <span className="rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold text-primary-600 dark:text-primary-300">
+              Toggle
+            </span>
           </button>
-        </div>
+        </section>
 
-        {/* Notifications */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-            Notifications
-          </h3>
-          <div className="space-y-3">
-            {/* Enable/Disable Notifications */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <div className="flex items-center gap-3 flex-1">
-                <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                <div className="text-left">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    Desktop Notifications
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Show notifications for new messages
-                  </p>
+        <section>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Notifications</h3>
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 shadow-sm transition hover:border-white/60 dark:border-white/10 dark:bg-slate-950/70">
+              <div className="flex flex-1 items-center gap-4">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500 dark:text-primary-300">
+                  <Bell className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-display text-base text-slate-900 dark:text-white">Desktop notifications</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Surface new messages instantly on your desktop.</p>
                 </div>
               </div>
               <button
                 onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  notificationsEnabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+                className={`relative flex h-7 w-14 items-center rounded-full transition ${
+                  notificationsEnabled
+                    ? 'bg-gradient-to-r from-primary-600 to-accent-500'
+                    : 'bg-white/60 dark:bg-slate-700'
                 }`}
               >
-                <motion.div
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md"
-                  animate={{ left: notificationsEnabled ? '26px' : '2px' }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                <motion.span
+                  className="absolute left-1 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-lg"
+                  animate={{ x: notificationsEnabled ? 28 : 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                 />
               </button>
             </div>
 
-            {/* Enable/Disable Sound */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <div className="flex items-center gap-3 flex-1">
-                {notificationSoundEnabled ? (
-                  <Volume2 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                ) : (
-                  <VolumeX className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                )}
-                <div className="text-left">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    Notification Sound
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Play sound with notifications
-                  </p>
+            <div className="flex items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 shadow-sm transition hover:border-white/60 dark:border-white/10 dark:bg-slate-950/70">
+              <div className="flex flex-1 items-center gap-4">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500 dark:text-primary-300">
+                  {notificationSoundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                </span>
+                <div>
+                  <p className="font-display text-base text-slate-900 dark:text-white">Notification sound</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Play a gentle chime whenever a new message arrives.</p>
                 </div>
               </div>
               <button
                 onClick={() => setNotificationSoundEnabled(!notificationSoundEnabled)}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  notificationSoundEnabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+                className={`relative flex h-7 w-14 items-center rounded-full transition ${
+                  notificationSoundEnabled
+                    ? 'bg-gradient-to-r from-primary-600 to-accent-500'
+                    : 'bg-white/60 dark:bg-slate-700'
                 }`}
               >
-                <motion.div
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md"
-                  animate={{ left: notificationSoundEnabled ? '26px' : '2px' }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                <motion.span
+                  className="absolute left-1 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-lg"
+                  animate={{ x: notificationSoundEnabled ? 28 : 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                 />
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Account */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-            Account
-          </h3>
-          <div className="space-y-3">
+        <section>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Account</h3>
+          <div className="mt-3 space-y-3">
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+              className="flex w-full items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-white/60 hover:shadow-lg hover:shadow-primary-500/10 focus:outline-none dark:border-white/10 dark:bg-slate-950/70"
             >
-              <LogOut className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">Sign Out</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Sign out of your account
-                </p>
+              <div className="flex items-center gap-4">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500 dark:text-primary-300">
+                  <LogOut className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-display text-base text-slate-900 dark:text-white">Sign out</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Sign out on this device and keep your keys local.</p>
+                </div>
               </div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-500/80 dark:text-primary-300/80">Action</span>
             </button>
 
             <button
               onClick={() => setShowDeleteAccount(true)}
-              className="w-full flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-left"
+              className="flex w-full items-center justify-between rounded-3xl border border-red-200/70 bg-red-50/80 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-lg hover:shadow-red-300/20 focus:outline-none dark:border-red-500/20 dark:bg-red-500/10"
             >
-              <UserX className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <div>
-                <p className="font-medium text-red-600 dark:text-red-400">Delete Account</p>
-                <p className="text-sm text-red-500 dark:text-red-400/80">
-                  Permanently delete your account
-                </p>
+              <div className="flex items-center gap-4">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/15 text-red-600 dark:text-red-300">
+                  <UserX className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-display text-base text-red-600 dark:text-red-300">Delete account</p>
+                  <p className="text-sm text-red-500/90 dark:text-red-300/80">Remove your profile, conversations, and keys forever.</p>
+                </div>
               </div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-red-500/80">Danger</span>
             </button>
           </div>
-        </div>
+        </section>
 
-        {/* User Info */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-            Account Information
-          </h3>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+        <section>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Account information</h3>
+          <div className="mt-3 space-y-3 rounded-3xl border border-white/40 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-slate-950/70">
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Name</p>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
-                {currentUser?.displayName}
-              </p>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">Name</p>
+              <p className="mt-1 font-display text-base text-slate-900 dark:text-white">{currentUser?.displayName}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Email</p>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
-                {currentUser?.email}
-              </p>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">Email</p>
+              <p className="mt-1 font-mono text-sm text-slate-600 dark:text-slate-300">{currentUser?.email}</p>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* Delete Account Confirmation Modal */}
       {showDeleteAccount && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
+            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                <UserX className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
+                <UserX className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">Delete Account?</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">This action is permanent</p>
+                <h3 className="text-2xl font-display text-slate-900 dark:text-white">Delete account?</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  This removes your profile, encrypted keys, and every conversation for good.
+                </p>
               </div>
             </div>
 
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-800 dark:text-red-200">
-                <strong>⚠️ Warning:</strong> This will permanently delete your account, all conversations, and encrypted messages. This action cannot be undone.
+            <div className="mt-6 rounded-2xl border border-red-200/70 bg-red-50/90 p-5 text-sm leading-relaxed text-red-700 shadow-inner dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-100">
+              <p className="font-semibold">⚠️ No undo</p>
+              <p className="mt-2">
+                This action permanently wipes your encrypted history and recovery keys. Ensure you have backups before continuing.
               </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={() => setShowDeleteAccount(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
               >
-                Cancel
+                Keep my account
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isDeleting ? 'Deleting...' : 'Delete Account'}
+                {isDeleting ? 'Deleting...' : 'Delete forever'}
               </button>
             </div>
           </motion.div>
