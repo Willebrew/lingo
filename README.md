@@ -35,10 +35,11 @@ A modern, secure messaging application with built-in AI-powered translation. Mes
 
 **Cryptographic Implementation:**
 - **Encryption:** NaCl `box` (Curve25519-XSalsa20-Poly1305)
-- **Key Derivation:** PBKDF2 with 100,000 iterations (SHA-256)
-- **Private Key Storage:** AES-GCM-256 encrypted with user password
-- **Recovery System:** 6-word recovery codes for key backup
-- **Key Fingerprints:** SHA-512 fingerprints for manual verification
+- **Key Derivation:** PBKDF2 with 600,000 iterations (SHA-256)
+- **Private Key Storage:** Encrypted with user password using PBKDF2 + AES-GCM
+- **Session Persistence:** Password stored in sessionStorage (cleared on browser close)
+- **Recovery System:** Base64 recovery codes for key backup
+- **Key Ownership Verification:** Cryptographic validation ensures keys match user
 
 **Security Protections:**
 - ✅ Messages encrypted client-side before transmission
@@ -126,7 +127,17 @@ Or manually copy the rules from [`firestore.rules`](firestore.rules) to the Fire
 
 **Note:** The authoritative security rules are maintained in [`firestore.rules`](firestore.rules). Always refer to that file for the latest rules.
 
-### 4. Get Anthropic API Key
+### 4. Get Firebase Admin Credentials
+
+For the translation feature to work, you need Firebase Admin SDK credentials:
+
+1. In Firebase Console, go to **Project Settings** (⚙️ icon)
+2. Click on **Service accounts** tab
+3. Click **Generate new private key**
+4. Download the JSON file
+5. Keep this file safe - you'll need it in the next step
+
+### 5. Get Anthropic API Key
 
 1. Go to [Anthropic Console](https://console.anthropic.com/)
 2. Sign up or log in
@@ -134,7 +145,7 @@ Or manually copy the rules from [`firestore.rules`](firestore.rules) to the Fire
 4. Create a new API key
 5. Copy the key
 
-### 5. Environment Variables
+### 6. Environment Variables
 
 Copy the example environment file and add your keys:
 
@@ -153,11 +164,21 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 
-# Anthropic API Key (from Step 4)
+# Firebase Admin SDK (from Step 4 - for translation API)
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYourKeyHere\n-----END PRIVATE KEY-----"
+
+# Anthropic API Key (from Step 5)
 ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
 ```
 
-### 6. Run Development Server
+**Important:**
+- The `FIREBASE_PRIVATE_KEY` must be wrapped in quotes and keep the `\n` characters
+- You can find these values in the JSON file you downloaded in Step 4:
+  - `client_email` → `FIREBASE_CLIENT_EMAIL`
+  - `private_key` → `FIREBASE_PRIVATE_KEY`
+
+### 7. Run Development Server
 
 ```bash
 npm run dev
@@ -165,7 +186,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 7. Create Firestore Indexes (IMPORTANT!)
+### 8. Create Firestore Indexes (IMPORTANT!)
 
 **When you first try to view conversations**, you'll see an error in the console with a link. This is normal!
 
@@ -194,7 +215,7 @@ Go to Firebase Console → Firestore → Indexes tab and create these:
   - `conversationId` (Ascending)
   - `timestamp` (Ascending)
 
-### 7. Deploy to Vercel
+### 9. Deploy to Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone)
 
@@ -204,9 +225,15 @@ Go to Firebase Console → Firestore → Indexes tab and create these:
 4. Import your GitHub repository
 5. Add environment variables:
    - Go to Project Settings → Environment Variables
-   - Add all variables from `.env.local`
+   - Add **all** variables from `.env.local` (including Firebase Admin credentials)
    - Make sure to add them for Production, Preview, and Development
+   - **Important:** For `FIREBASE_PRIVATE_KEY`, paste the entire value including quotes and `\n` characters
 6. Deploy!
+
+**Vercel Deployment Notes:**
+- The app will build and deploy automatically
+- Translation feature requires Firebase Admin credentials to be set
+- Ensure all environment variables are added before deployment
 
 ## 🔧 Configuration
 
