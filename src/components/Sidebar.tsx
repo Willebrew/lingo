@@ -181,7 +181,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                           setSelectedConversationId(conv.id);
                           onClose?.();
                         }}
-                        className={`relative flex w-full items-start gap-4 overflow-hidden rounded-[28px] border px-5 py-4 pr-14 pb-6 text-left shadow-sm transition ${
+                        className={`relative flex w-full items-start gap-4 overflow-hidden rounded-[28px] border px-5 py-4 pr-16 text-left shadow-sm transition ${
                           isSelected
                             ? 'border-primary-400/50 bg-primary-500/10 shadow-lg ring-1 ring-primary-500/30 dark:border-primary-400/30 dark:bg-primary-900/20'
                             : 'border-transparent bg-white/60 hover:border-white/60 hover:bg-white/80 dark:bg-slate-950/40 dark:hover:border-white/10 dark:hover:bg-slate-950/60'
@@ -190,13 +190,13 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/30 text-base font-semibold text-primary-600 dark:text-primary-300">
                           {getConversationName(conv).charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1 pr-2">
+                          <div className="flex items-start flex-col gap-1">
                             <p className="font-display text-base text-slate-900 dark:text-white">
                               {getConversationName(conv)}
                             </p>
                             {conv.lastMessageAt && (
-                              <span className="flex-shrink-0 text-xs text-slate-400 dark:text-slate-400">
+                              <span className="text-xs text-slate-400 dark:text-slate-400">
                                 {formatDistanceToNow(conv.lastMessageAt, { addSuffix: true }).replace('about ', '')}
                               </span>
                             )}
@@ -207,11 +207,10 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                             </p>
                           )}
                         </div>
-                        <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400/10 to-primary-500/20 opacity-0 transition group-hover:opacity-100" />
                       </button>
                       <button
                         onClick={(e) => handleDeleteConversation(conv.id, e)}
-                        className="absolute right-4 bottom-4 flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-white/90 text-red-500 opacity-100 shadow-sm transition hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 dark:border-red-500/20 dark:bg-red-500/10 dark:hover:bg-red-500/20"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-white/90 text-red-500 opacity-100 shadow-sm transition hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 dark:border-red-500/20 dark:bg-red-500/10 dark:hover:bg-red-500/20"
                         title="Delete conversation"
                       >
                         <Trash2 className="h-4 w-4" />

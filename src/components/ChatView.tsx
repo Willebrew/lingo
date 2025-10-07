@@ -160,8 +160,8 @@ export default function ChatView() {
 
     const result = await deleteConversation(selectedConversationId);
     if (result.success) {
-      toast.success('Conversation deleted for all participants');
       setShowDeleteConfirm(false);
+      // Toast is shown by the deleteConversation hook
     } else {
       toast.error('Failed to delete conversation');
     }
@@ -340,8 +340,8 @@ export default function ChatView() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-white/20 bg-white/80 px-6 py-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/65">
-        <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+      <div className="border-t border-white/20 bg-white/80 px-6 py-5 pb-safe backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/65 lg:pb-5">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-3 mb-20 lg:mb-0">
           <input
             type="text"
             value={messageText}
@@ -353,7 +353,7 @@ export default function ChatView() {
           <button
             type="submit"
             disabled={!canSendMessage}
-            className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary-600 via-primary-500 to-accent-500 text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary-600 via-primary-500 to-accent-500 text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Send"
           >
             <Send className="h-5 w-5" />

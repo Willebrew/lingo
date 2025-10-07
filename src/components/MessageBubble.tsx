@@ -133,7 +133,7 @@ export default function MessageBubble({ message, isOwn, index }: MessageBubblePr
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95, y: 6 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
-                      className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/40 bg-white/85 p-2 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 z-50"
+                      className="absolute left-0 top-full mt-2 w-48 rounded-2xl border border-white/40 bg-white/85 p-2 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 z-50"
                     >
                       <button
                         onClick={handleTranslateClick}

@@ -163,7 +163,7 @@ export default function ChatLayout() {
               {[
                 { id: 'messages' as ViewType, icon: MessageSquare, label: 'Messages' },
                 { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
-                { id: 'notifications' as ViewType, icon: Bell, label: 'Alerts' },
+                { id: 'notifications' as ViewType, icon: Bell, label: 'Notifications' },
                 { id: 'settings' as ViewType, icon: Settings, label: 'Settings' },
               ].map((item) => {
                 const Icon = item.icon;
