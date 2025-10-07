@@ -10,7 +10,7 @@ import {
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useStore } from '@/store/useStore';
-import { generateKeyPair, storePrivateKey, removePrivateKey } from '@/utils/encryption';
+import { generateKeyPair, storePrivateKey, removePrivateKey, getStoredEncryptionPassword } from '@/utils/encryption';
 import type { User } from '@/types';
 
 export function useAuth() {
@@ -24,11 +24,19 @@ export function useAuth() {
           return;
         }
 
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          setCurrentUser(userDoc.data() as User);
-          // Password is kept in memory only, not persisted for security
-          // Users will need to re-login if page is refreshed
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            setCurrentUser(userDoc.data() as User);
+            // Attempt to recover persisted encryption password when available
+            const persistedPassword = getStoredEncryptionPassword(firebaseUser.uid);
+            if (persistedPassword) {
+              setUserPassword(persistedPassword);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load user profile:', error);
+          setCurrentUser(null);
         }
       } else {
         setCurrentUser(null);

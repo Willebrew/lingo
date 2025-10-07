@@ -15,6 +15,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import toast from 'react-hot-toast';
 import type { User, Conversation, Message } from '@/types';
 
 // Users
@@ -84,12 +85,19 @@ export function subscribeToConversations(
     where('participants', 'array-contains', userId)
   );
 
-  return onSnapshot(q, (snapshot) => {
-    const conversations = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() } as Conversation))
-      .sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
-    callback(conversations);
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const conversations = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() } as Conversation))
+        .sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
+      callback(conversations);
+    },
+    (error) => {
+      console.error('Failed to subscribe to conversations:', error);
+      toast.error('Unable to load conversations. Please refresh or check your permissions.');
+    }
+  );
 }
 
 // Messages
@@ -148,12 +156,19 @@ export function subscribeToMessages(
     orderBy('timestamp', 'asc')
   );
 
-  return onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() } as Message)
-    );
-    callback(messages);
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const messages = snapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Message)
+      );
+      callback(messages);
+    },
+    (error) => {
+      console.error('Failed to subscribe to messages:', error);
+      toast.error('Unable to load messages for this conversation.');
+    }
+  );
 }
 
 export async function findOrCreateConversation(

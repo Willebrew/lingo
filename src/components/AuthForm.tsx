@@ -101,79 +101,69 @@ export default function AuthForm({ onRecoveryModalChange }: AuthFormProps) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col items-center justify-center px-6 py-16 lg:flex-row lg:items-start lg:py-24"
+        className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-6 py-16 lg:px-10"
       >
-        <div className="flex w-full flex-1 flex-col items-center gap-10 lg:items-start">
-          <div className="max-w-xl text-center lg:text-left">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 shadow-sm backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" />
-              Private preview
-            </span>
-            <h1 className="mt-6 text-4xl font-display text-slate-900 dark:text-white sm:text-5xl">
-              Conversations that sound natural,
-              <span className="text-primary-600"> instantly translated</span>.
-            </h1>
-            <p className="mt-5 text-base leading-relaxed text-slate-600 dark:text-slate-300">
-              Lingo keeps your chats beautifully secure while making every message feel personal. Share moments, collaborate across languages, and stay in sync without compromising privacy.
-            </p>
+        <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-10">
+            <div className="max-w-xl text-center lg:text-left">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/75 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-primary-300">
+                <Sparkles className="h-3.5 w-3.5" />
+                Private preview
+              </span>
+              <h1 className="mt-6 text-4xl font-display text-slate-900 sm:text-5xl dark:text-white">
+                Secure multilingual messaging made effortless.
+              </h1>
+              <p className="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                Lingo keeps teams in sync across languages with beautiful, end-to-end encrypted chat built for trust.
+              </p>
+            </div>
+
+            <div className="grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
+              {[
+                {
+                  title: 'End-to-end first',
+                  description: 'Every word is encrypted before it leaves your device.',
+                  icon: <Lock className="h-5 w-5" />,
+                },
+                {
+                  title: 'Live translation',
+                  description: 'Pick a preferred language and we handle the rest.',
+                  icon: <Languages className="h-5 w-5" />,
+                },
+                {
+                  title: 'Recovery ready',
+                  description: 'Safeguard your keys with elegant recovery workflows.',
+                  icon: <ShieldCheck className="h-5 w-5" />,
+                },
+                {
+                  title: 'Made for teams',
+                  description: 'Group spaces that feel high-touch and beautifully minimal.',
+                  icon: <Image src="/logo.png" alt="Lingo" width={28} height={28} className="rounded-xl" />,
+                },
+              ].map(({ title, description, icon }) => (
+                <div key={title} className="rounded-[22px] border border-white/30 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:shadow-[0_18px_46px_rgba(3,8,25,0.35)]">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-[18px] bg-gradient-to-br from-primary-500/12 via-primary-400/10 to-accent-400/12 text-primary-600 dark:text-primary-200">
+                      {icon}
+                    </span>
+                    <div>
+                      <p className="font-display text-base text-slate-900 dark:text-white">{title}</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-[24px] border border-white/30 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:shadow-[0_20px_40px_rgba(3,8,25,0.32)]">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-200">
-                  <Lock className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-display text-lg text-slate-900 dark:text-white">End-to-end first</p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Every word is encrypted before it leaves your device.</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-[24px] border border-white/30 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:shadow-[0_20px_40px_rgba(3,8,25,0.32)]">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-600 dark:text-accent-200">
-                  <Languages className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-display text-lg text-slate-900 dark:text-white">Live translation</p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Pick a preferred language and we handle the rest.</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-[24px] border border-white/30 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:shadow-[0_20px_40px_rgba(3,8,25,0.32)]">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-200">
-                  <ShieldCheck className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-display text-lg text-slate-900 dark:text-white">Recovery ready</p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Safeguard your keys with elegant recovery workflows.</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-[24px] border border-white/30 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:shadow-[0_20px_40px_rgba(3,8,25,0.32)]">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-600 dark:text-accent-200">
-                  <Image src="/logo.png" alt="Lingo" width={28} height={28} className="rounded-xl" />
-                </span>
-                <div>
-                  <p className="font-display text-lg text-slate-900 dark:text-white">Made for teams</p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Group spaces that feel high-touch and beautifully minimal.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative mt-14 w-full max-w-lg lg:mt-0">
-          <div className="absolute -inset-x-4 -top-8 bottom-12 rounded-[40px] bg-gradient-to-br from-primary-500/20 via-transparent to-accent-400/20 blur-3xl" />
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.6, ease: 'easeOut' }}
-            className="relative rounded-[32px] border border-white/35 bg-white/90 p-10 shadow-[0_28px_60px_rgba(31,41,120,0.22)] backdrop-blur-xl dark:border-white/12 dark:bg-[rgba(17,24,54,0.82)] dark:shadow-[0_26px_60px_rgba(3,8,25,0.4)]"
-          >
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-br from-primary-500/15 via-transparent to-accent-400/15 blur-3xl" />
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.6, ease: 'easeOut' }}
+              className="relative rounded-[32px] border border-white/35 bg-white/95 p-10 shadow-[0_28px_60px_rgba(31,41,120,0.22)] backdrop-blur-xl dark:border-white/12 dark:bg-[rgba(17,24,54,0.88)] dark:shadow-[0_30px_70px_rgba(3,8,25,0.48)]"
+            >
             <div className="mb-8 text-center">
               <span className="inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary-600">
                 Say hello
@@ -247,7 +237,7 @@ export default function AuthForm({ onRecoveryModalChange }: AuthFormProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                className="w-full rounded-[18px] border border-white/35 bg-white/85 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/15 dark:bg-white/12 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
+                  className="w-full rounded-[18px] border border-white/35 bg-white/85 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/15 dark:bg-white/12 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
                   placeholder="you@company.com"
                   required
                 />
@@ -262,7 +252,7 @@ export default function AuthForm({ onRecoveryModalChange }: AuthFormProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                className="w-full rounded-[18px] border border-white/35 bg-white/85 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/15 dark:bg-white/12 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
+                  className="w-full rounded-[18px] border border-white/35 bg-white/85 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/70 dark:border-white/15 dark:bg-white/12 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-700/40"
                   placeholder="••••••••"
                   required
                 />
@@ -292,7 +282,8 @@ export default function AuthForm({ onRecoveryModalChange }: AuthFormProps) {
             </div>
           </motion.div>
         </div>
-      </motion.div>
+      </div>
+    </motion.div>
 
       {recoveryCode && (
         <RecoveryCodeModal

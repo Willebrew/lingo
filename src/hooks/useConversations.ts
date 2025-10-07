@@ -6,6 +6,7 @@ import {
   searchUsersByEmail,
   deleteConversation as dbDeleteConversation,
 } from '@/lib/db';
+import toast from 'react-hot-toast';
 
 export function useConversations() {
   const { currentUser, conversations, setConversations, setSelectedConversationId } = useStore();
@@ -13,9 +14,12 @@ export function useConversations() {
   useEffect(() => {
     if (!currentUser) return;
 
-    const unsubscribe = subscribeToConversations(currentUser.id, (convs) => {
-      setConversations(convs);
-    });
+    const unsubscribe = subscribeToConversations(
+      currentUser.id,
+      (convs) => {
+        setConversations(convs);
+      }
+    );
 
     return () => unsubscribe();
   }, [currentUser, setConversations]);
@@ -39,6 +43,7 @@ export function useConversations() {
       return conversationId;
     } catch (error: any) {
       console.error('Failed to start conversation:', error);
+      toast.error(error.message || 'Failed to start conversation');
       throw error;
     }
   };
@@ -51,6 +56,7 @@ export function useConversations() {
       return { success: true };
     } catch (error: any) {
       console.error('Failed to delete conversation:', error);
+      toast.error(error.message || 'Failed to delete conversation');
       return { success: false, error: error.message };
     }
   };

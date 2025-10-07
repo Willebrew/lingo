@@ -78,13 +78,9 @@ export default function ChatLayout() {
               })}
             </nav>
 
-            <div className="mt-6 flex items-center gap-3 rounded-[26px] border border-white/25 bg-white/85 px-4 py-4 text-left shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/70">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
+            <div className="mt-6 flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/35 bg-white/90 text-primary-600 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-primary-200">
                 <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">Encrypted</p>
-                <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">Lingo secures every message.</p>
               </div>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Key, RefreshCw } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { restorePrivateKey, generateKeyPair, storePrivateKey } from '@/utils/encryption';
+import { restorePrivateKey, generateKeyPair, storePrivateKey, getStoredEncryptionPassword } from '@/utils/encryption';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import toast from 'react-hot-toast';
@@ -14,20 +14,21 @@ interface KeyRecoveryModalProps {
 }
 
 export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
-  const { currentUser, userPassword, triggerKeyRestored } = useStore();
+  const { currentUser, userPassword, setUserPassword, triggerKeyRestored } = useStore();
   const [privateKeyInput, setPrivateKeyInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRegenerateOption, setShowRegenerateOption] = useState(false);
 
   const handleRecover = async () => {
-    if (!currentUser || !privateKeyInput.trim() || !userPassword) return;
+    if (!currentUser || !privateKeyInput.trim()) return;
 
     setLoading(true);
     try {
-      const success = await restorePrivateKey(currentUser.id, privateKeyInput.trim(), userPassword);
+      const encryptionPassword = await restorePrivateKey(currentUser.id, privateKeyInput.trim(), userPassword || undefined);
 
-      if (success) {
+      if (encryptionPassword) {
         toast.success('Private key restored successfully!');
+        setUserPassword(encryptionPassword);
         triggerKeyRestored(); // Trigger reload of messages
         onSuccess();
       } else {
@@ -42,7 +43,7 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
   };
 
   const handleRegenerate = async () => {
-    if (!currentUser || !userPassword) return;
+    if (!currentUser) return;
 
     setLoading(true);
     try {
@@ -50,7 +51,7 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
       const { publicKey, privateKey } = generateKeyPair();
 
       // Store private key
-      const newRecoveryCode = await storePrivateKey(currentUser.id, privateKey, userPassword);
+      const newRecoveryCode = await storePrivateKey(currentUser.id, privateKey, userPassword || undefined);
 
       // Update public key in Firestore
       await updateDoc(doc(db, 'users', currentUser.id), {
@@ -64,6 +65,10 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
         { duration: 15000 }
       );
 
+      const encryptionPassword = getStoredEncryptionPassword(currentUser.id);
+      if (encryptionPassword) {
+        setUserPassword(encryptionPassword);
+      }
       triggerKeyRestored(); // Trigger reload of messages
       onSuccess();
     } catch (error) {

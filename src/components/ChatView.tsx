@@ -137,7 +137,7 @@ export default function ChatView() {
     }
   };
 
-  const canSendMessage = Boolean(messageText.trim() && conversation && userPassword && !isSending);
+  const canSendMessage = Boolean(messageText.trim() && conversation && !isSending);
 
   const getConversationDisplayName = () => {
     if (!conversation || !currentUser) return 'Unknown';
@@ -385,7 +385,7 @@ export default function ChatView() {
             onChange={(e) => setMessageText(e.target.value)}
             placeholder="Write something thoughtful…"
             className="flex-1 rounded-[24px] border border-white/40 bg-white/85 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
-            disabled={!conversation || !userPassword}
+            disabled={!conversation}
           />
           <button
             type="submit"
