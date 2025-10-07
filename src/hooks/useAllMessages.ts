@@ -20,6 +20,8 @@ export function useAllMessages() {
   useEffect(() => {
     if (!currentUser || !userPassword || conversations.length === 0) return;
 
+    const cleanupMap = unsubscribers.current;
+
     const loadMessagesForConversation = async (conversationId: string) => {
       try {
         const conversation = await getConversation(conversationId);
@@ -90,9 +92,8 @@ export function useAllMessages() {
     });
 
     return () => {
-      // Clean up all subscriptions
-      unsubscribers.current.forEach((unsub) => unsub());
-      unsubscribers.current.clear();
+      cleanupMap.forEach((unsub) => unsub());
+      cleanupMap.clear();
     };
   }, [currentUser, userPassword, conversations, setMessages, notifyNewMessage, keyRestoredAt]);
 }

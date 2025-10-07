@@ -23,6 +23,35 @@ export default function SettingsPanel() {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const Toggle = ({
+    enabled,
+    onToggle,
+    srLabel,
+  }: {
+    enabled: boolean;
+    onToggle: () => void;
+    srLabel: string;
+  }) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`relative flex h-8 w-14 items-center overflow-hidden rounded-full transition-all duration-300 ${
+        enabled
+          ? 'bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 shadow-[0_8px_20px_rgba(35,83,206,0.25)]'
+          : 'bg-slate-200/70 dark:bg-slate-800/70'
+      }`}
+      aria-pressed={enabled}
+    >
+      <span className="sr-only">{srLabel}</span>
+      <motion.span
+        className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full bg-white shadow-md"
+        animate={{ x: enabled ? 30 : 4 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+      />
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full border border-white/40 opacity-60" />
+    </button>
+  );
+
   const handleSignOut = async () => {
     const result = await signOut();
     if (result.success) {
@@ -102,7 +131,7 @@ export default function SettingsPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-white/30 px-6 py-6 dark:border-white/10">
+      <div className="border-b border-white/20 px-6 py-6 backdrop-blur-sm dark:border-white/10">
         <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">Preferences</p>
         <h2 className="mt-3 text-2xl font-display text-slate-900 dark:text-white">Settings</h2>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -115,15 +144,15 @@ export default function SettingsPanel() {
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Appearance</h3>
           <button
             onClick={toggleTheme}
-            className="mt-3 flex w-full items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-white/60 hover:shadow-lg hover:shadow-primary-500/10 focus:outline-none dark:border-white/10 dark:bg-slate-950/70"
+            className="mt-3 flex w-full items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 focus:outline-none dark:border-white/10 dark:bg-slate-900/70"
           >
             <div className="flex items-center gap-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 dark:text-primary-300">
+              <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
                 {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
               </span>
               <div>
-                <p className="font-display text-lg text-slate-900 dark:text-white">Theme</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{theme === 'light' ? 'Light mode' : 'Dark mode'}</p>
+                <p className="font-display text-lg text-slate-900 dark:text-slate-100">Theme</p>
+                <p className="text-sm text-slate-500 dark:text-slate-300">{theme === 'light' ? 'Light mode' : 'Dark mode'}</p>
               </div>
             </div>
             <span className="rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold text-primary-600 dark:text-primary-300">
@@ -135,56 +164,38 @@ export default function SettingsPanel() {
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Notifications</h3>
           <div className="mt-3 space-y-3">
-            <div className="flex items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 shadow-sm transition hover:border-white/60 dark:border-white/10 dark:bg-slate-950/70">
+            <div className="flex items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-4 shadow-sm transition hover:border-primary-200 dark:border-white/10 dark:bg-slate-900/70">
               <div className="flex flex-1 items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500 dark:text-primary-300">
+                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
                   <Bell className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="font-display text-base text-slate-900 dark:text-white">Desktop notifications</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Surface new messages instantly on your desktop.</p>
+                  <p className="font-display text-base text-slate-900 dark:text-slate-100">Desktop notifications</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-300">Surface new messages instantly on your desktop.</p>
                 </div>
               </div>
-              <button
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className={`relative flex h-7 w-14 items-center rounded-full transition ${
-                  notificationsEnabled
-                    ? 'bg-gradient-to-r from-primary-600 to-accent-500'
-                    : 'bg-white/60 dark:bg-slate-700'
-                }`}
-              >
-                <motion.span
-                  className="absolute left-1 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-lg"
-                  animate={{ x: notificationsEnabled ? 28 : 0 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                />
-              </button>
+              <Toggle
+                enabled={notificationsEnabled}
+                onToggle={() => setNotificationsEnabled(!notificationsEnabled)}
+                srLabel="Toggle desktop notifications"
+              />
             </div>
 
-            <div className="flex items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 shadow-sm transition hover:border-white/60 dark:border-white/10 dark:bg-slate-950/70">
+            <div className="flex items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-4 shadow-sm transition hover:border-primary-200 dark:border-white/10 dark:bg-slate-900/70">
               <div className="flex flex-1 items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500 dark:text-primary-300">
+                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
                   {notificationSoundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
                 </span>
                 <div>
-                  <p className="font-display text-base text-slate-900 dark:text-white">Notification sound</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Play a gentle chime whenever a new message arrives.</p>
+                  <p className="font-display text-base text-slate-900 dark:text-slate-100">Notification sound</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-300">Play a gentle chime whenever a new message arrives.</p>
                 </div>
               </div>
-              <button
-                onClick={() => setNotificationSoundEnabled(!notificationSoundEnabled)}
-                className={`relative flex h-7 w-14 items-center rounded-full transition ${
-                  notificationSoundEnabled
-                    ? 'bg-gradient-to-r from-primary-600 to-accent-500'
-                    : 'bg-white/60 dark:bg-slate-700'
-                }`}
-              >
-                <motion.span
-                  className="absolute left-1 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-lg"
-                  animate={{ x: notificationSoundEnabled ? 28 : 0 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                />
-              </button>
+              <Toggle
+                enabled={notificationSoundEnabled}
+                onToggle={() => setNotificationSoundEnabled(!notificationSoundEnabled)}
+                srLabel="Toggle notification sound"
+              />
             </div>
           </div>
         </section>
@@ -194,15 +205,15 @@ export default function SettingsPanel() {
           <div className="mt-3 space-y-3">
             <button
               onClick={handleSignOut}
-              className="flex w-full items-center justify-between rounded-3xl border border-white/40 bg-white/80 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-white/60 hover:shadow-lg hover:shadow-primary-500/10 focus:outline-none dark:border-white/10 dark:bg-slate-950/70"
+              className="flex w-full items-center justify-between rounded-[28px] border border-white/30 bg-white/85 px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 focus:outline-none dark:border-white/10 dark:bg-slate-900/70"
             >
               <div className="flex items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500 dark:text-primary-300">
+                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
                   <LogOut className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="font-display text-base text-slate-900 dark:text-white">Sign out</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Sign out on this device and keep your keys local.</p>
+                  <p className="font-display text-base text-slate-900 dark:text-slate-100">Sign out</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-300">Sign out on this device and keep your keys local.</p>
                 </div>
               </div>
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-500/80 dark:text-primary-300/80">Action</span>
@@ -210,15 +221,15 @@ export default function SettingsPanel() {
 
             <button
               onClick={() => setShowDeleteAccount(true)}
-              className="flex w-full items-center justify-between rounded-3xl border border-red-200/70 bg-red-50/80 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-lg hover:shadow-red-300/20 focus:outline-none dark:border-red-500/20 dark:bg-red-500/10"
+              className="flex w-full items-center justify-between rounded-[28px] border border-red-200/60 bg-white/85 px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 focus:outline-none dark:border-red-500/25 dark:bg-red-500/15"
             >
               <div className="flex items-center gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/15 text-red-600 dark:text-red-300">
+                <span className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-gradient-to-br from-red-500/20 via-rose-500/20 to-amber-400/20 text-red-100 shadow-inner dark:text-red-200">
                   <UserX className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="font-display text-base text-red-600 dark:text-red-300">Delete account</p>
-                  <p className="text-sm text-red-500/90 dark:text-red-300/80">Remove your profile, conversations, and keys forever.</p>
+                  <p className="font-display text-base text-red-600 dark:text-red-200">Delete account</p>
+                  <p className="text-sm text-red-500/90 dark:text-red-200/80">Remove your profile, conversations, and keys forever.</p>
                 </div>
               </div>
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-red-500/80">Danger</span>
@@ -228,14 +239,14 @@ export default function SettingsPanel() {
 
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Account information</h3>
-          <div className="mt-3 space-y-3 rounded-3xl border border-white/40 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+          <div className="mt-3 space-y-3 rounded-[28px] border border-white/30 bg-white/85 p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">Name</p>
-              <p className="mt-1 font-display text-base text-slate-900 dark:text-white">{currentUser?.displayName}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-400">Name</p>
+              <p className="mt-1 font-display text-base text-slate-900 dark:text-slate-100">{currentUser?.displayName}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">Email</p>
-              <p className="mt-1 font-mono text-sm text-slate-600 dark:text-slate-300">{currentUser?.email}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-400">Email</p>
+              <p className="mt-1 font-mono text-sm text-slate-600 dark:text-slate-200">{currentUser?.email}</p>
             </div>
           </div>
         </section>

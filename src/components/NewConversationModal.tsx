@@ -88,7 +88,7 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-xl rounded-[30px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
+          className="w-full max-w-xl rounded-[30px] border border-white/25 bg-white/90 p-8 shadow-[0_24px_60px_rgba(31,41,120,0.22)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
@@ -104,7 +104,7 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
             </div>
             <button
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/70 text-slate-500 transition hover:text-slate-800 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-500 transition hover:border-primary-200 hover:text-slate-800 dark:border-white/15 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -122,7 +122,7 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
               <div>
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400 dark:text-slate-400">
                   <span>Select contacts</span>
                   {selectedContactIds.size > 0 && (
                     <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-600 dark:bg-primary-500/20 dark:text-primary-300">
@@ -130,11 +130,11 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
                     </span>
                   )}
                 </div>
-                <div className="mt-3 max-h-64 overflow-y-auto rounded-3xl border border-white/40 bg-white/60 p-1 shadow-inner scrollbar-thin dark:border-white/10 dark:bg-slate-900/60">
+                <div className="mt-3 max-h-64 overflow-y-auto rounded-[26px] border border-white/35 bg-white/70 p-2 shadow-inner scrollbar-thin dark:border-white/10 dark:bg-slate-900/60">
                   {contacts.map((contact) => (
                     <label
                       key={contact.id}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-600 transition hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-600 transition hover:bg-white dark:text-slate-200 dark:hover:bg-slate-900/70"
                     >
                       <input
                         type="checkbox"
@@ -143,8 +143,8 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
                         className="h-4 w-4 rounded border-white/40 text-primary-500 focus:ring-2 focus:ring-primary-400 dark:border-white/20"
                       />
                       <div className="flex-1">
-                        <p className="font-medium text-slate-700 dark:text-slate-200">{contact.displayName}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{contact.email}</p>
+                        <p className="font-medium text-slate-700 dark:text-slate-100">{contact.displayName}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-400 truncate" title={contact.email}>{contact.email}</p>
                       </div>
                     </label>
                   ))}

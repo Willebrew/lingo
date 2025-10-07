@@ -69,7 +69,7 @@ export default function NotificationsPanel({ onConversationClick }: Notification
 
       <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
         {notifications.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/50 px-8 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-400">
+          <div className="flex h-full flex-col items-center justify-center rounded-[30px] border border-dashed border-white/50 bg-white/50 px-8 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-400">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-500">
               <Bell className="h-7 w-7" />
             </div>
@@ -87,7 +87,7 @@ export default function NotificationsPanel({ onConversationClick }: Notification
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 onClick={() => handleNotificationClick(notification)}
-                className="flex w-full flex-col gap-3 rounded-3xl border border-white/40 bg-white/80 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-white/70 hover:shadow-lg hover:shadow-primary-500/10 focus:outline-none dark:border-white/10 dark:bg-slate-950/70"
+                className="flex w-full flex-col gap-3 rounded-[28px] border border-white/20 bg-white/70 p-4 text-left shadow-[0_18px_40px_rgba(31,41,120,0.18)] transition hover:-translate-y-0.5 hover:border-white/40 hover:shadow-[0_22px_50px_rgba(31,41,120,0.26)] focus:outline-none dark:border-white/10 dark:bg-slate-900/70"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/25 to-accent-400/20 text-base font-semibold text-primary-600 shadow-sm dark:text-primary-200">
@@ -102,7 +102,7 @@ export default function NotificationsPanel({ onConversationClick }: Notification
                         {formatDistanceToNow(notification.timestamp, { addSuffix: true }).replace('about ', '')}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-slate-600 line-clamp-2 dark:text-slate-400">
+                    <p className="mt-1 text-sm text-slate-600 line-clamp-2 dark:text-slate-300">
                       {notification.message}
                     </p>
                   </div>

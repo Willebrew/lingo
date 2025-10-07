@@ -6,7 +6,7 @@ import { useStore } from '@/store/useStore';
 import { useMessages } from '@/hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
 import { useContacts } from '@/hooks/useContacts';
-import { Send, Lock, Trash2, MoreVertical, Menu, UserPlus, Users, Edit3, ArrowLeft } from 'lucide-react';
+import { Send, Lock, Trash2, MoreVertical, UserPlus, Users, Edit3, ArrowLeft } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import KeyRecoveryModal from './KeyRecoveryModal';
 import { getConversation, addParticipantToConversation } from '@/lib/db';
@@ -30,7 +30,8 @@ export default function ChatView() {
   const { messages, sendMessageToConversation } = useMessages(selectedConversationId);
   const { deleteConversation } = useConversations();
   const { contacts } = useContacts();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isInitialScrollRef = useRef(true);
 
   useEffect(() => {
     if (!selectedConversationId) {
@@ -85,8 +86,23 @@ export default function ChatView() {
   }, [currentUser, userPassword]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const behavior = isInitialScrollRef.current ? 'auto' : 'smooth';
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
+
+    if (isInitialScrollRef.current) {
+      isInitialScrollRef.current = false;
+    }
   }, [messages]);
+
+  useEffect(() => {
+    isInitialScrollRef.current = true;
+  }, [selectedConversationId]);
 
   // Mark messages as read when opening conversation
   useEffect(() => {
@@ -99,6 +115,12 @@ export default function ChatView() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() || !conversation || isSending) return;
+
+    if (!userPassword) {
+      toast.error('Unlock your keys before sending a message.');
+      setShowKeyRecovery(true);
+      return;
+    }
 
     setIsSending(true);
     const messageToSend = messageText;
@@ -114,6 +136,8 @@ export default function ChatView() {
       setIsSending(false);
     }
   };
+
+  const canSendMessage = Boolean(messageText.trim() && conversation && userPassword && !isSending);
 
   const getConversationDisplayName = () => {
     if (!conversation || !currentUser) return 'Unknown';
@@ -258,7 +282,7 @@ export default function ChatView() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-white/30 bg-white/70 px-6 py-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60">
+      <header className="flex items-center justify-between border-b border-white/20 bg-white/80 px-6 py-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/65">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setSelectedConversationId(null)}
@@ -267,7 +291,7 @@ export default function ChatView() {
             <ArrowLeft className="h-5 w-5" />
           </button>
 
-          <div className="relative flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500/20 via-primary-400/25 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-300">
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500/20 via-primary-400/25 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
             {isGroupChat ? <Users className="h-5 w-5" /> : getConversationDisplayName().charAt(0).toUpperCase()}
           </div>
 
@@ -285,7 +309,7 @@ export default function ChatView() {
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/50 bg-white/70 text-slate-500 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/40 bg-white/75 text-slate-500 transition hover:border-primary-200 hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
           >
             <MoreVertical className="h-5 w-5" />
           </button>
@@ -333,7 +357,10 @@ export default function ChatView() {
       </header>
 
       {/* Messages */}
-      <div className="relative flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
+      <div
+        ref={messagesContainerRef}
+        className="relative flex-1 overflow-y-auto px-6 py-6 scrollbar-thin"
+      >
         <div className="pointer-events-none absolute inset-0 bg-soft-grid [background-size:22px_22px] opacity-40 dark:opacity-20" />
         <div className="relative space-y-4">
           <AnimatePresence initial={false}>
@@ -346,23 +373,23 @@ export default function ChatView() {
               />
             ))}
           </AnimatePresence>
-          <div ref={messagesEndRef} />
         </div>
       </div>
 
       {/* Input */}
-      <div className="border-t border-white/30 bg-white/70 px-6 py-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60">
+      <div className="border-t border-white/20 bg-white/80 px-6 py-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/65">
         <form onSubmit={handleSendMessage} className="flex items-center gap-3">
           <input
             type="text"
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder="Write something thoughtful…"
-            className="flex-1 rounded-[24px] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
+            className="flex-1 rounded-[24px] border border-white/40 bg-white/85 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
+            disabled={!conversation || !userPassword}
           />
           <button
             type="submit"
-            disabled={!messageText.trim() || isSending}
+            disabled={!canSendMessage}
             className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary-600 via-primary-500 to-accent-500 text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Send"
           >

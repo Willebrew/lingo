@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import IconSidebar from './IconSidebar';
+import Image from 'next/image';
 import Sidebar from './Sidebar';
 import NotificationsPanel from './NotificationsPanel';
 import SettingsPanel from './SettingsPanel';
 import ChatView from './ChatView';
-import { Menu, MessageSquare, Users, Bell, Settings } from 'lucide-react';
+import { MessageSquare, Users, Bell, Settings, ShieldCheck } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 type ViewType = 'messages' | 'contacts' | 'notifications' | 'settings';
 
@@ -41,7 +40,7 @@ export default function ChatLayout() {
           <div className="hidden lg:flex w-[96px] flex-col rounded-[30px] border border-white/30 bg-white/20 p-4 text-slate-700 shadow-subtle backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/25">
             <div className="flex h-16 w-full items-center justify-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/40 bg-white/80 shadow-lg dark:border-white/10 dark:bg-slate-950/70">
-                <img src="/logo.png" alt="Lingo" className="h-8 w-8 rounded-xl object-cover" />
+                <Image src="/logo.png" alt="Lingo" width={32} height={32} className="h-8 w-8 rounded-xl object-cover" priority />
               </div>
             </div>
 
@@ -79,9 +78,14 @@ export default function ChatLayout() {
               })}
             </nav>
 
-            <div className="mt-6 rounded-2xl border border-white/40 bg-white/60 px-4 py-3 text-center text-xs font-medium text-slate-500 shadow-sm dark:border-white/10 dark:bg-slate-950/60 dark:text-slate-300">
-              <p>Encrypted</p>
-              <p className="font-display text-primary-600 dark:text-primary-300">by Lingo</p>
+            <div className="mt-6 flex items-center gap-3 rounded-[26px] border border-white/25 bg-white/85 px-4 py-4 text-left shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/70">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-gradient-to-br from-primary-500/20 via-primary-400/20 to-accent-400/20 text-primary-600 shadow-inner dark:text-primary-200">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">Encrypted</p>
+                <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">Lingo secures every message.</p>
+              </div>
             </div>
           </div>
 

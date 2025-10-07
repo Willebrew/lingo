@@ -1,10 +1,31 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Calistoga } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' });
-const calistoga = Calistoga({ subsets: ['latin'], weight: '400', variable: '--font-cal', display: 'swap' });
+const jakarta = localFont({
+  src: [
+    {
+      path: '../../public/fonts/plus-jakarta-sans-latin.woff2',
+      weight: '400 700',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
+
+const calistoga = localFont({
+  src: [
+    {
+      path: '../../public/fonts/calistoga-latin-400.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-cal',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Lingo - Secure Encrypted Messaging',

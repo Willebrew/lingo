@@ -14,7 +14,7 @@ import { generateKeyPair, storePrivateKey, removePrivateKey } from '@/utils/encr
 import type { User } from '@/types';
 
 export function useAuth() {
-  const { setCurrentUser, setUserPassword, isSigningUp, setIsSigningUp } = useStore();
+  const { currentUser, setCurrentUser, setUserPassword, isSigningUp, setIsSigningUp } = useStore();
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -41,17 +41,16 @@ export function useAuth() {
 
   // Real-time listener for current user updates (contacts, etc.)
   useEffect(() => {
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser || isSigningUp) return;
+    if (!currentUser || isSigningUp) return;
 
-    const unsubscribeUser = onSnapshot(doc(db, 'users', firebaseUser.uid), (snapshot) => {
+    const unsubscribeUser = onSnapshot(doc(db, 'users', currentUser.id), (snapshot) => {
       if (snapshot.exists()) {
         setCurrentUser(snapshot.data() as User);
       }
     });
 
     return () => unsubscribeUser();
-  }, [auth.currentUser?.uid, isSigningUp, setCurrentUser]);
+  }, [currentUser, isSigningUp, setCurrentUser]);
 
   const signUp = async (email: string, password: string, displayName: string, preferredLanguage: string = 'en') => {
     try {

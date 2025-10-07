@@ -6,10 +6,11 @@ import { useStore } from '@/store/useStore';
 import { useConversations } from '@/hooks/useConversations';
 import { useContacts } from '@/hooks/useContacts';
 import { findOrCreateConversation } from '@/lib/db';
-import { MessageSquare, Plus, X, Users, Trash2, UserPlus, Search } from 'lucide-react';
+import { MessageSquare, Plus, Users, Trash2, UserPlus, Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import NewConversationModal from './NewConversationModal';
+import type { Conversation } from '@/types';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -18,9 +19,8 @@ interface SidebarProps {
 
 export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarProps) {
   const { currentUser, selectedConversationId, setSelectedConversationId } = useStore();
-  const { conversations } = useConversations();
+  const { conversations, deleteConversation } = useConversations();
   const { contacts, addContact, removeContact } = useContacts();
-  const { deleteConversation } = useConversations();
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'contacts'>(initialTab);
 
@@ -29,12 +29,13 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
     setActiveTab(initialTab);
   }, [initialTab]);
   const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [addingContact, setAddingContact] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const getConversationName = (conv: any) => {
+  const getConversationName = (conv: Conversation) => {
     // If conversation has a custom name, use it
     if (conv.name) {
       return conv.name;
@@ -68,13 +69,22 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
   };
 
   const confirmDelete = async () => {
-    if (!deletingConvId) return;
-    const result = await deleteConversation(deletingConvId);
-    if (result.success) {
-      toast.success('Conversation deleted');
-      setDeletingConvId(null);
-    } else {
-      toast.error('Failed to delete conversation');
+    if (!deletingConvId || isDeletingConversation) return;
+
+    setIsDeletingConversation(true);
+    try {
+      const result = await deleteConversation(deletingConvId);
+      if (result.success) {
+        toast.success('Conversation deleted');
+        if (selectedConversationId === deletingConvId) {
+          setSelectedConversationId(null);
+        }
+        setDeletingConvId(null);
+      } else {
+        toast.error('Failed to delete conversation');
+      }
+    } finally {
+      setIsDeletingConversation(false);
     }
   };
 
@@ -109,7 +119,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
     contact.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredConversations = conversations.filter((conv) =>
+  const filteredConversations = conversations.filter((conv: Conversation) =>
     getConversationName(conv).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -118,7 +128,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
       <div className="px-6 pt-7">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">Inbox</p>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 dark:text-slate-300">Inbox</p>
             <h2 className="mt-3 text-2xl font-display text-slate-900 dark:text-white">Your spaces</h2>
           </div>
           <button
@@ -133,15 +143,15 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
           </button>
         </div>
 
-        <div className="mt-6 inline-flex rounded-full border border-white/50 bg-white/70 p-1 text-xs font-semibold shadow-sm dark:border-white/10 dark:bg-slate-900/50">
+        <div className="mt-6 inline-flex rounded-full border border-white/30 bg-white/80 p-1 text-xs font-semibold shadow-sm dark:border-white/10 dark:bg-slate-900/60 lg:hidden">
           {(['messages', 'contacts'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`rounded-full px-4 py-1.5 transition ${
                 activeTab === tab
-                  ? 'bg-white text-primary-600 shadow dark:bg-slate-900/80 dark:text-primary-300'
-                  : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-300'
+                  ? 'bg-white text-primary-600 shadow dark:bg-slate-900/80 dark:text-primary-200'
+                  : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-200'
               }`}
             >
               {tab === 'messages' ? 'Messages' : 'Contacts'}
@@ -158,7 +168,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
             placeholder={activeTab === 'messages' ? 'Search conversations' : 'Search contacts'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-full border border-white/40 bg-white/70 py-3 pl-11 pr-5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
+            className="w-full rounded-full border border-white/40 bg-white/80 py-3 pl-11 pr-5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary-300 focus:ring-4 focus:ring-primary-200/60 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:placeholder:text-slate-400 dark:focus:border-primary-500 dark:focus:ring-primary-800/40"
           />
         </div>
       </div>
@@ -167,13 +177,13 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
         {activeTab === 'messages' ? (
           <div className="space-y-3">
             {conversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/40 px-6 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+              <div className="flex flex-col items-center justify-center rounded-[30px] border border-dashed border-white/50 bg-white/40 px-6 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
                 <MessageSquare className="mb-4 h-12 w-12 text-primary-400" />
                 <p className="font-semibold">No conversations yet</p>
                 <p className="mt-1 text-sm text-slate-500/80 dark:text-slate-400/80">Start a new conversation to get going.</p>
               </div>
             ) : filteredConversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/40 px-6 py-10 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+              <div className="flex flex-col items-center justify-center rounded-[30px] border border-dashed border-white/50 bg-white/40 px-6 py-10 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
                 <Search className="mb-4 h-10 w-10 text-primary-400" />
                 <p className="font-semibold">No matches</p>
                 <p className="mt-1 text-sm text-slate-500/80 dark:text-slate-400/80">Try a different keyword.</p>
@@ -188,7 +198,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                           setSelectedConversationId(conv.id);
                           onClose?.();
                         }}
-                        className={`relative flex w-full items-start gap-4 overflow-hidden rounded-3xl border px-4 py-4 text-left shadow-sm transition ${
+                        className={`relative flex w-full items-start gap-4 overflow-hidden rounded-[28px] border px-5 py-4 pr-14 pb-6 text-left shadow-sm transition ${
                           isSelected
                             ? 'border-primary-400/50 bg-primary-500/10 shadow-lg ring-1 ring-primary-500/30 dark:border-primary-400/30 dark:bg-primary-900/20'
                             : 'border-transparent bg-white/60 hover:border-white/60 hover:bg-white/80 dark:bg-slate-950/40 dark:hover:border-white/10 dark:hover:bg-slate-950/60'
@@ -203,13 +213,13 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                               {getConversationName(conv)}
                             </p>
                             {conv.lastMessageAt && (
-                              <span className="flex-shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                              <span className="flex-shrink-0 text-xs text-slate-400 dark:text-slate-400">
                                 {formatDistanceToNow(conv.lastMessageAt, { addSuffix: true }).replace('about ', '')}
                               </span>
                             )}
                           </div>
                           {conv.lastMessage && (
-                            <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
+                            <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-300">
                               {conv.lastMessage}
                             </p>
                           )}
@@ -218,7 +228,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                       </button>
                       <button
                         onClick={(e) => handleDeleteConversation(conv.id, e)}
-                        className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl border border-red-100 bg-white/80 text-red-500 opacity-0 shadow-sm transition hover:bg-red-50 group-hover:opacity-100 dark:border-red-500/20 dark:bg-red-500/10 dark:hover:bg-red-500/20"
+                        className="absolute right-4 bottom-4 flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-white/85 text-red-500 opacity-0 shadow-sm transition hover:bg-red-50 group-hover:opacity-100 dark:border-red-500/20 dark:bg-red-500/10 dark:hover:bg-red-500/20"
                         title="Delete conversation"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -230,11 +240,11 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.28em] text-slate-400 dark:text-slate-300">
               <span>Your contacts</span>
               <button
                 onClick={() => setShowAddContact(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/70 px-3 py-1 text-[11px] font-semibold text-primary-600 transition hover:bg-primary-500/10 dark:border-white/10 dark:bg-slate-900/60 dark:text-primary-300"
+                className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/80 px-3 py-1 text-[11px] font-semibold text-primary-600 transition hover:bg-primary-500/10 dark:border-white/10 dark:bg-slate-900/60 dark:text-primary-200"
               >
                 <UserPlus className="h-3.5 w-3.5" />
                 Add
@@ -242,7 +252,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
             </div>
 
             {filteredContacts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/50 bg-white/40 px-6 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+              <div className="flex flex-col items-center justify-center rounded-[30px] border border-dashed border-white/50 bg-white/40 px-6 py-12 text-center text-slate-500 shadow-inner dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
                 <Users className="mb-4 h-12 w-12 text-accent-400" />
                 <p className="font-semibold">
                   {searchQuery ? 'No contacts found' : 'No contacts yet'}
@@ -254,7 +264,7 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
             ) : (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {filteredContacts.map((contact) => (
-                  <div key={contact.id} className="group relative overflow-hidden rounded-3xl border border-transparent bg-white/60 p-4 text-center shadow-sm transition hover:border-white/60 hover:bg-white/80 dark:bg-slate-950/40 dark:hover:border-white/10 dark:hover:bg-slate-950/60">
+                  <div key={contact.id} className="group relative overflow-hidden rounded-[28px] border border-transparent bg-white/60 p-4 text-center shadow-sm transition hover:border-white/60 hover:bg-white/80 dark:bg-slate-950/40 dark:hover:border-white/10 dark:hover:bg-slate-950/60">
                     <button
                       onClick={async () => {
                         if (!currentUser) return;
@@ -281,7 +291,9 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
                         <p className="font-display text-sm text-slate-900 dark:text-white">
                           {contact.displayName}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{contact.email}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300 truncate" title={contact.email}>
+                          {contact.email}
+                        </p>
                       </div>
                     </button>
                     <button
@@ -342,55 +354,10 @@ export default function Sidebar({ onClose, initialTab = 'messages' }: SidebarPro
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
-              >
-                Delete for everyone
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Delete Account Confirmation */}
-      {showDeleteAccount && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-lg rounded-[28px] border border-white/30 bg-white/85 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
-                <UserX className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-display text-slate-900 dark:text-white">Delete account?</h3>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  Your history, keys, and encrypted messages will be removed for good.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-2xl border border-red-200/70 bg-red-50/90 p-5 text-sm leading-relaxed text-red-700 shadow-inner dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-100">
-              <p className="font-semibold">⚠️ Important:</p>
-              <p className="mt-2">
-                This permanently deletes your profile, encrypted keys, recovery codes, and every conversation—no one will be able to retrieve them afterwards.
-              </p>
-            </div>
-
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => setShowDeleteAccount(false)}
-                className="flex-1 rounded-full border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900"
-              >
-                Keep my account
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={isDeleting}
+                disabled={isDeletingConversation}
                 className="flex-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isDeleting ? 'Deleting…' : 'Delete forever'}
+                {isDeletingConversation ? 'Deleting…' : 'Delete for everyone'}
               </button>
             </div>
           </motion.div>

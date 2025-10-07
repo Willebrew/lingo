@@ -19,9 +19,9 @@ export function generateKeyPair(): EncryptionKeys {
 
 /**
  * Derive encryption key from password using PBKDF2
- * Using 600,000 iterations as per OWASP 2023 recommendations
+ * @param iterations - Number of PBKDF2 iterations (100k for legacy, 600k for new keys)
  */
-async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveKeyFromPassword(password: string, salt: Uint8Array, iterations: number = 600000): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const passwordKey = await crypto.subtle.importKey(
     'raw',
@@ -35,7 +35,7 @@ async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promis
     {
       name: 'PBKDF2',
       salt: salt,
-      iterations: 600000, // OWASP 2023 recommendation (was 100,000)
+      iterations: iterations,
       hash: 'SHA-256',
     },
     passwordKey,
@@ -47,8 +47,9 @@ async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promis
 
 /**
  * Derive HMAC key from password for integrity checks
+ * @param iterations - Number of PBKDF2 iterations (should match encryption key)
  */
-async function deriveHMACKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveHMACKey(password: string, salt: Uint8Array, iterations: number = 600000): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const passwordKey = await crypto.subtle.importKey(
     'raw',
@@ -62,7 +63,7 @@ async function deriveHMACKey(password: string, salt: Uint8Array): Promise<Crypto
     {
       name: 'PBKDF2',
       salt: salt,
-      iterations: 600000,
+      iterations: iterations,
       hash: 'SHA-256',
     },
     passwordKey,
@@ -75,11 +76,13 @@ async function deriveHMACKey(password: string, salt: Uint8Array): Promise<Crypto
 /**
  * Encrypt private key with password before storage
  * Includes HMAC for integrity protection
+ * Uses 600,000 PBKDF2 iterations (OWASP 2023)
  */
 async function encryptPrivateKey(privateKey: string, password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKeyFromPassword(password, salt);
+  const iterations = 600000; // OWASP 2023 recommendation
+  const key = await deriveKeyFromPassword(password, salt, iterations);
 
   const encoder = new TextEncoder();
   const encryptedData = await crypto.subtle.encrypt(
@@ -89,7 +92,7 @@ async function encryptPrivateKey(privateKey: string, password: string): Promise<
   );
 
   // Generate HMAC for integrity
-  const hmacKey = await deriveHMACKey(password, salt);
+  const hmacKey = await deriveHMACKey(password, salt, iterations);
   const dataToSign = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
   dataToSign.set(salt, 0);
   dataToSign.set(iv, salt.length);
@@ -102,7 +105,7 @@ async function encryptPrivateKey(privateKey: string, password: string): Promise<
   );
 
   // Combine: version(1) + salt(16) + iv(12) + encrypted data + hmac(32)
-  const version = new Uint8Array([2]); // Version 2 with HMAC
+  const version = new Uint8Array([2]); // Version 2 with HMAC + 600k iterations
   const combined = new Uint8Array(1 + salt.length + iv.length + encryptedData.byteLength + hmacSignature.byteLength);
   combined.set(version, 0);
   combined.set(salt, 1);
@@ -116,6 +119,7 @@ async function encryptPrivateKey(privateKey: string, password: string): Promise<
 /**
  * Decrypt private key with password
  * Verifies HMAC integrity for version 2+ keys
+ * Handles legacy keys with 100k iterations and new keys with 600k
  */
 async function decryptPrivateKey(encryptedPrivateKey: string, password: string): Promise<string | null> {
   try {
@@ -125,15 +129,16 @@ async function decryptPrivateKey(encryptedPrivateKey: string, password: string):
     const version = combined[0];
 
     if (version === 2) {
-      // Version 2: Has HMAC integrity check
+      // Version 2: HMAC integrity check + 600k iterations (OWASP 2023)
       const salt = combined.slice(1, 17);
       const iv = combined.slice(17, 29);
       const hmacSize = 32; // SHA-256 HMAC is 32 bytes
       const data = combined.slice(29, combined.length - hmacSize);
       const storedHmac = combined.slice(combined.length - hmacSize);
+      const iterations = 600000;
 
       // Verify HMAC
-      const hmacKey = await deriveHMACKey(password, salt);
+      const hmacKey = await deriveHMACKey(password, salt, iterations);
       const dataToVerify = combined.slice(0, combined.length - hmacSize);
 
       const isValid = await crypto.subtle.verify(
@@ -148,8 +153,8 @@ async function decryptPrivateKey(encryptedPrivateKey: string, password: string):
         return null;
       }
 
-      // Decrypt data
-      const key = await deriveKeyFromPassword(password, salt);
+      // Decrypt data with 600k iterations
+      const key = await deriveKeyFromPassword(password, salt, iterations);
       const decryptedData = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv: iv },
         key,
@@ -159,12 +164,13 @@ async function decryptPrivateKey(encryptedPrivateKey: string, password: string):
       const decoder = new TextDecoder();
       return decoder.decode(decryptedData);
     } else {
-      // Legacy version 1 or unversioned: No HMAC (backwards compatibility)
+      // Legacy version 1 or unversioned: No HMAC, 100k iterations (backward compatibility)
       const salt = combined.slice(0, 16);
       const iv = combined.slice(16, 28);
       const data = combined.slice(28);
+      const iterations = 100000; // Legacy iteration count
 
-      const key = await deriveKeyFromPassword(password, salt);
+      const key = await deriveKeyFromPassword(password, salt, iterations);
       const decryptedData = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv: iv },
         key,
