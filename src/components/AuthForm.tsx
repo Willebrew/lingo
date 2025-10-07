@@ -28,7 +28,11 @@ const LANGUAGES = [
   { code: 'fi', name: 'Finnish (Suomi)' },
 ];
 
-export default function AuthForm() {
+interface AuthFormProps {
+  onRecoveryModalChange?: (showing: boolean) => void;
+}
+
+export default function AuthForm({ onRecoveryModalChange }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +42,7 @@ export default function AuthForm() {
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [pendingUserData, setPendingUserData] = useState<any>(null);
   const { signIn, signUp } = useAuth();
-  const { setCurrentUser } = useStore();
+  const { setCurrentUser, setIsSigningUp } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +68,7 @@ export default function AuthForm() {
             console.log('[AuthForm] Setting recovery code modal to show');
             setRecoveryCode(result.recoveryCode);
             setPendingUserData(result.userData);
+            onRecoveryModalChange?.(true);
           } else {
             console.warn('[AuthForm] Missing recovery code or user data!');
             toast.success('Account created successfully!');
@@ -162,6 +167,7 @@ export default function AuthForm() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
                 required
               />
@@ -175,6 +181,7 @@ export default function AuthForm() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-gray-900 dark:text-white"
                 required
               />
@@ -208,7 +215,9 @@ export default function AuthForm() {
           recoveryCode={recoveryCode}
           onConfirm={() => {
             setRecoveryCode(null);
-            // NOW set the current user to complete signup
+            onRecoveryModalChange?.(false);
+            // Reset signup flag and set current user to complete signup
+            setIsSigningUp(false);
             if (pendingUserData) {
               setCurrentUser(pendingUserData);
               setPendingUserData(null);

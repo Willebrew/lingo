@@ -6,6 +6,9 @@ export interface User {
   preferredLanguage?: string; // ISO 639-1 language code (e.g., 'en', 'es', 'sv')
   createdAt: number;
   lastSeen: number;
+  contacts?: string[]; // Array of user IDs
+  status?: 'online' | 'offline'; // User status
+  avatarUrl?: string; // Profile picture URL
 }
 
 export interface Conversation {
@@ -17,6 +20,7 @@ export interface Conversation {
       publicKey: string;
     };
   };
+  name?: string; // Custom conversation name
   lastMessage?: string;
   lastMessageAt?: number;
   createdAt: number;
@@ -32,6 +36,7 @@ export interface Message {
   };
   timestamp: number;
   translated?: boolean;
+  isSystemMessage?: boolean; // For system notifications like name changes
 }
 
 export interface EncryptionKeys {
@@ -47,6 +52,7 @@ export interface DecryptedMessage {
   content: string;
   timestamp: number;
   translated?: boolean;
+  isSystemMessage?: boolean;
 }
 
 export interface TranslationRequest {

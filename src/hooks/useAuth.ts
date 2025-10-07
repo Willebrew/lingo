@@ -7,34 +7,31 @@ import {
   updateProfile,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useStore } from '@/store/useStore';
 import { generateKeyPair, storePrivateKey, removePrivateKey } from '@/utils/encryption';
 import type { User } from '@/types';
 
 export function useAuth() {
-  const { setCurrentUser, setUserPassword } = useStore();
+  const { setCurrentUser, setUserPassword, isSigningUp, setIsSigningUp } = useStore();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        console.log('[useAuth] User authenticated:', firebaseUser.uid);
+        // Don't auto-login during signup - let the recovery modal show first
+        if (isSigningUp) {
+          return;
+        }
+
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setCurrentUser(userDoc.data() as User);
 
           // Restore password from sessionStorage if available
           const storedPassword = sessionStorage.getItem(`lingo_session_${firebaseUser.uid}`);
-          console.log('[useAuth] Restoring password from sessionStorage:', {
-            hasPassword: !!storedPassword,
-            userId: firebaseUser.uid
-          });
           if (storedPassword) {
             setUserPassword(storedPassword);
-            console.log('[useAuth] Password restored successfully');
-          } else {
-            console.warn('[useAuth] No password found in sessionStorage - user may need to sign in again');
           }
         }
       } else {
@@ -43,11 +40,28 @@ export function useAuth() {
       }
     });
 
-    return () => unsubscribe();
-  }, [setCurrentUser, setUserPassword]);
+    return () => unsubscribeAuth();
+  }, [setCurrentUser, setUserPassword, isSigningUp]);
+
+  // Real-time listener for current user updates (contacts, etc.)
+  useEffect(() => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser || isSigningUp) return;
+
+    const unsubscribeUser = onSnapshot(doc(db, 'users', firebaseUser.uid), (snapshot) => {
+      if (snapshot.exists()) {
+        setCurrentUser(snapshot.data() as User);
+      }
+    });
+
+    return () => unsubscribeUser();
+  }, [auth.currentUser?.uid, isSigningUp, setCurrentUser]);
 
   const signUp = async (email: string, password: string, displayName: string, preferredLanguage: string = 'en') => {
     try {
+      // Set flag to prevent onAuthStateChanged from auto-logging in
+      setIsSigningUp(true);
+
       const { publicKey, privateKey } = generateKeyPair();
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -81,6 +95,8 @@ export function useAuth() {
 
       return { success: true, recoveryCode, userData };
     } catch (error: any) {
+      // Reset flag on error
+      setIsSigningUp(false);
       return { success: false, error: error.message };
     }
   };
@@ -99,7 +115,12 @@ export function useAuth() {
         return { success: true };
       }
 
-      return { success: false, error: 'User data not found' };
+      // User exists in Auth but not in Firestore (orphaned from failed deletion)
+      // Delete the auth user and tell them to create a new account
+      console.log('[useAuth] Orphaned auth user detected, cleaning up...');
+      const { deleteUser } = await import('firebase/auth');
+      await deleteUser(userCredential.user);
+      return { success: false, error: 'Account data was corrupted. Please create a new account.' };
     } catch (error: any) {
       return { success: false, error: error.message };
     }

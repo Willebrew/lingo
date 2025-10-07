@@ -2,6 +2,9 @@ import * as nacl from 'tweetnacl';
 import * as naclUtil from 'tweetnacl-util';
 import type { EncryptionKeys } from '@/types';
 
+// Cache for decrypted private keys to avoid expensive re-decryption
+const privateKeyCache = new Map<string, string>();
+
 /**
  * Generate a new encryption key pair for E2E encryption
  */
@@ -70,17 +73,13 @@ async function encryptPrivateKey(privateKey: string, password: string): Promise<
  */
 async function decryptPrivateKey(encryptedPrivateKey: string, password: string): Promise<string | null> {
   try {
-    console.log('[encryption] Decrypting private key...');
     const combined = naclUtil.decodeBase64(encryptedPrivateKey);
-    console.log('[encryption] Decoded encrypted key, length:', combined.length);
     const salt = combined.slice(0, 16);
     const iv = combined.slice(16, 28);
     const data = combined.slice(28);
 
-    console.log('[encryption] Deriving key from password...');
     const key = await deriveKeyFromPassword(password, salt);
 
-    console.log('[encryption] Attempting AES-GCM decryption...');
     const decryptedData = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: iv },
       key,
@@ -89,11 +88,9 @@ async function decryptPrivateKey(encryptedPrivateKey: string, password: string):
 
     const decoder = new TextDecoder();
     const result = decoder.decode(decryptedData);
-    console.log('[encryption] Decryption successful');
     return result;
   } catch (error) {
     console.error('[encryption] Decryption failed:', error);
-    console.error('[encryption] This usually means wrong password or corrupted encrypted key');
     return null;
   }
 }
@@ -161,20 +158,13 @@ export function decryptMessage(
 
 /**
  * Store private key securely in localStorage (encrypted with password)
- * Returns recovery code that user MUST save
+ * Returns the BASE64-ENCODED PRIVATE KEY that user MUST save
  */
 export async function storePrivateKey(userId: string, privateKey: string, password: string): Promise<string> {
   if (typeof window !== 'undefined') {
     const encryptedKey = await encryptPrivateKey(privateKey, password);
     localStorage.setItem(`lingo_pk_${userId}`, encryptedKey);
-
-    // Store backup recovery code (encrypted)
-    const recoveryCode = generateRecoveryCode();
-    const encryptedRecovery = await encryptPrivateKey(privateKey, recoveryCode);
-    localStorage.setItem(`lingo_recovery_${userId}`, encryptedRecovery);
-
-    // Return recovery code to user (they must save it!)
-    return recoveryCode;
+    return privateKey;
   }
   return '';
 }
@@ -182,38 +172,62 @@ export async function storePrivateKey(userId: string, privateKey: string, passwo
 /**
  * Retrieve and decrypt private key from localStorage
  */
-export async function getPrivateKey(userId: string, password: string): Promise<string | null> {
+export async function getPrivateKey(userId: string, password: string, silent: boolean = false): Promise<string | null> {
   if (typeof window !== 'undefined') {
-    console.log('[encryption] Getting private key for user:', userId);
+    // Check cache first
+    const cacheKey = `${userId}:${password}`;
+    const cached = privateKeyCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const encryptedKey = localStorage.getItem(`lingo_pk_${userId}`);
     if (!encryptedKey) {
-      console.error('[encryption] No encrypted private key found in localStorage');
+      if (!silent) {
+        console.error('[encryption] No encrypted private key found in localStorage');
+      }
       return null;
     }
 
-    console.log('[encryption] Found encrypted key, attempting to decrypt...');
     const decrypted = await decryptPrivateKey(encryptedKey, password);
-    if (decrypted) {
-      console.log('[encryption] Private key decrypted successfully');
-    } else {
-      console.error('[encryption] Failed to decrypt private key - wrong password or corrupted key');
+    if (!decrypted && !silent) {
+      console.error('[encryption] Failed to decrypt private key');
     }
+
+    // Store in cache if successful
+    if (decrypted) {
+      privateKeyCache.set(cacheKey, decrypted);
+    }
+
     return decrypted;
   }
   return null;
 }
 
 /**
- * Recover private key using recovery code
+ * Restore private key from saved backup (the actual base64 private key)
  */
-export async function recoverPrivateKey(userId: string, recoveryCode: string): Promise<string | null> {
+export async function restorePrivateKey(userId: string, privateKey: string, password: string): Promise<boolean> {
   if (typeof window !== 'undefined') {
-    const encryptedRecovery = localStorage.getItem(`lingo_recovery_${userId}`);
-    if (!encryptedRecovery) return null;
+    try {
+      // Validate that the private key is valid base64 and correct length
+      const decoded = naclUtil.decodeBase64(privateKey.trim());
+      if (decoded.length !== nacl.box.secretKeyLength) {
+        console.error('[encryption] Invalid private key length:', decoded.length);
+        return false;
+      }
 
-    return await decryptPrivateKey(encryptedRecovery, recoveryCode);
+      // Store it encrypted with password
+      const encryptedKey = await encryptPrivateKey(privateKey.trim(), password);
+      localStorage.setItem(`lingo_pk_${userId}`, encryptedKey);
+
+      return true;
+    } catch (error) {
+      console.error('[encryption] Failed to restore private key:', error);
+      return false;
+    }
   }
-  return null;
+  return false;
 }
 
 /**
@@ -241,12 +255,17 @@ function generateRecoveryCode(): string {
 }
 
 /**
- * Remove private key from localStorage
+ * Remove private key from localStorage and cache
  */
 export function removePrivateKey(userId: string): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(`lingo_pk_${userId}`);
-    localStorage.removeItem(`lingo_recovery_${userId}`);
+    // Clear all cache entries for this user
+    for (const key of privateKeyCache.keys()) {
+      if (key.startsWith(`${userId}:`)) {
+        privateKeyCache.delete(key);
+      }
+    }
   }
 }
 

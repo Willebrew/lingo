@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Key, RefreshCw } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { recoverPrivateKey, generateKeyPair, storePrivateKey } from '@/utils/encryption';
+import { restorePrivateKey, generateKeyPair, storePrivateKey } from '@/utils/encryption';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import toast from 'react-hot-toast';
@@ -14,29 +14,28 @@ interface KeyRecoveryModalProps {
 }
 
 export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
-  const { currentUser, userPassword } = useStore();
-  const [recoveryCode, setRecoveryCode] = useState('');
+  const { currentUser, userPassword, triggerKeyRestored } = useStore();
+  const [privateKeyInput, setPrivateKeyInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRegenerateOption, setShowRegenerateOption] = useState(false);
 
   const handleRecover = async () => {
-    if (!currentUser || !recoveryCode.trim()) return;
+    if (!currentUser || !privateKeyInput.trim() || !userPassword) return;
 
     setLoading(true);
     try {
-      const privateKey = await recoverPrivateKey(currentUser.id, recoveryCode.trim());
+      const success = await restorePrivateKey(currentUser.id, privateKeyInput.trim(), userPassword);
 
-      if (privateKey && userPassword) {
-        // Re-store the private key with current password
-        await storePrivateKey(currentUser.id, privateKey, userPassword);
-        toast.success('Private key recovered successfully!');
+      if (success) {
+        toast.success('Private key restored successfully!');
+        triggerKeyRestored(); // Trigger reload of messages
         onSuccess();
       } else {
-        toast.error('Invalid recovery code. Please try again.');
+        toast.error('Invalid private key. Please check and try again.');
       }
     } catch (error) {
-      console.error('Recovery failed:', error);
-      toast.error('Recovery failed. Please check your code.');
+      console.error('Restore failed:', error);
+      toast.error('Restore failed. Please check your private key.');
     } finally {
       setLoading(false);
     }
@@ -58,11 +57,14 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
         publicKey,
       });
 
-      toast.success(
-        `New encryption keys generated!\n\nNew Recovery Code:\n${newRecoveryCode}\n\nSave this code - you'll need it to recover your account!`,
-        { duration: 10000 }
+      // Show the new private key in a toast
+      toast.success('New encryption keys generated!', { duration: 5000 });
+      toast(
+        `Private Key: ${newRecoveryCode}\n\nSave this key - you'll need it to restore your account!`,
+        { duration: 15000 }
       );
 
+      triggerKeyRestored(); // Trigger reload of messages
       onSuccess();
     } catch (error) {
       console.error('Key regeneration failed:', error);
@@ -103,31 +105,31 @@ export default function KeyRecoveryModal({ onSuccess }: KeyRecoveryModalProps) {
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
                 <Key className="w-4 h-4 inline mr-1" />
-                Recovery Code
+                Private Key
               </label>
-              <input
-                type="text"
-                value={recoveryCode}
-                onChange={(e) => setRecoveryCode(e.target.value)}
-                placeholder="word-word-word-word-word-word"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
+              <textarea
+                value={privateKeyInput}
+                onChange={(e) => setPrivateKeyInput(e.target.value)}
+                placeholder="Paste your private key here (base64 string)"
+                rows={4}
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none font-mono text-sm resize-none"
               />
             </div>
 
             <div className="flex flex-col gap-3">
               <button
                 onClick={handleRecover}
-                disabled={!recoveryCode.trim() || loading}
+                disabled={!privateKeyInput.trim() || loading}
                 className="w-full px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Recovering...' : 'Recover Keys'}
+                {loading ? 'Restoring...' : 'Restore Private Key'}
               </button>
 
               <button
                 onClick={() => setShowRegenerateOption(true)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
               >
-                I don&apos;t have my recovery code
+                I don&apos;t have my private key
               </button>
             </div>
           </>

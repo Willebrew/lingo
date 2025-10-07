@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import {
   subscribeToMessages,
@@ -7,11 +7,14 @@ import {
   getConversation,
 } from '@/lib/db';
 import { encryptMessage, decryptMessage, getPrivateKey } from '@/utils/encryption';
+import { useNotifications } from './useNotifications';
 import type { Message, DecryptedMessage, Conversation } from '@/types';
 
 export function useMessages(conversationId: string | null) {
-  const { currentUser, userPassword, messages, setMessages, addMessage } = useStore();
+  const { currentUser, userPassword, messages, setMessages, addMessage, addTranslatingMessage, removeTranslatingMessage, keyRestoredAt } = useStore();
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const { notifyNewMessage } = useNotifications();
+  const previousMessageIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!conversationId) return;
@@ -53,9 +56,20 @@ export function useMessages(conversationId: string | null) {
               content,
               timestamp: msg.timestamp,
               ...(msg.translated !== undefined && { translated: msg.translated }),
+              ...(msg.isSystemMessage && { isSystemMessage: true }),
             };
           })
           .filter((msg): msg is DecryptedMessage => msg !== null);
+
+        // Check for new messages from other users and send notifications
+        decrypted.forEach((msg) => {
+          if (!previousMessageIds.current.has(msg.id) && msg.senderId !== currentUser.id && !msg.isSystemMessage) {
+            notifyNewMessage(msg.senderName, msg.content);
+          }
+        });
+
+        // Update tracked message IDs
+        previousMessageIds.current = new Set(decrypted.map(m => m.id));
 
         setMessages(conversationId, decrypted);
       });
@@ -66,7 +80,7 @@ export function useMessages(conversationId: string | null) {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [conversationId, currentUser, conversation, userPassword, setMessages]);
+  }, [conversationId, currentUser, conversation, userPassword, setMessages, notifyNewMessage, keyRestoredAt]);
 
   const sendMessageToConversation = async (
     content: string,
@@ -89,15 +103,12 @@ export function useMessages(conversationId: string | null) {
       throw new Error('Missing required authentication data');
     }
 
-    console.log('[useMessages] Getting private key...');
     const privateKey = await getPrivateKey(currentUser.id, userPassword);
     if (!privateKey) {
-      console.error('[useMessages] Failed to get private key');
       throw new Error('Failed to decrypt private key');
     }
 
     try {
-      console.log('[useMessages] Encrypting message for participants:', conversation.participants);
       // Encrypt message for all participants
       const encryptedContent: { [recipientId: string]: string } = {};
 
@@ -148,6 +159,9 @@ export function useMessages(conversationId: string | null) {
 
     if (!message) return;
 
+    // Mark message as translating
+    addTranslatingMessage(messageId);
+
     try {
       const response = await fetch('/api/translate', {
         method: 'POST',
@@ -171,6 +185,9 @@ export function useMessages(conversationId: string | null) {
       }
     } catch (error) {
       console.error('Translation failed:', error);
+    } finally {
+      // Remove from translating state
+      removeTranslatingMessage(messageId);
     }
   };
 

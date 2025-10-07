@@ -4,15 +4,28 @@ A modern, secure messaging application with built-in AI-powered translation. Mes
 
 ## ✨ Features
 
+### Core Messaging
 - 🔐 **End-to-End Encryption** - All messages encrypted using NaCl (Curve25519-XSalsa20-Poly1305)
 - 🔒 **Password-Encrypted Keys** - Private keys encrypted with PBKDF2 + AES-GCM before storage
 - 🔑 **Key Recovery System** - Automatic recovery codes for account backup
-- 🌍 **AI Translation** - Translate messages to 10+ languages powered by Claude AI (with E2E warning)
+- ⚡ **Real-time Messaging** - Instant message delivery with Firebase Firestore
+- 👥 **Group Chats** - Create conversations with multiple participants
+- 💬 **Custom Chat Names** - Name your conversations with system notifications on changes
+- 🛡️ **Secure Firestore Rules** - Messages readable only by conversation participants
+
+### User Experience
 - 🎨 **Beautiful UI** - Modern, responsive design with smooth animations
 - 🌓 **Dark Mode** - Automatic theme switching with system preference detection
-- ⚡ **Real-time Messaging** - Instant message delivery with Firebase Firestore
-- 📱 **Mobile Friendly** - Fully responsive design for all devices
-- 🛡️ **Secure Firestore Rules** - Messages readable only by conversation participants
+- 📱 **Mobile Optimized** - Intuitive bottom navigation and touch-friendly interface
+- 🔔 **Smart Notifications** - Real-time notification badges with unread counts
+- 👤 **Contact Management** - Add, remove, and organize your contacts
+- 🔄 **Real-time Updates** - Live conversation updates and instant synchronization
+
+### Advanced Features
+- 🌍 **AI Translation** - Translate messages to 13+ languages powered by Claude AI (with E2E warning)
+- 🎯 **System Messages** - Automatic notifications for chat name changes and events
+- 💾 **Smart Caching** - Optimized performance with intelligent key caching
+- 🔐 **Account Security** - Secure account deletion with conversation cleanup
 
 ## 🔒 Security Features
 
@@ -96,42 +109,18 @@ const firebaseConfig = {
 
 ### 3. Firestore Security Rules
 
-Set up these security rules in Firestore:
+Deploy the security rules to Firestore:
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Users collection - users can read all users but only write their own data
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Conversations collection - only participants can access
-    match /conversations/{conversationId} {
-      allow read: if request.auth != null &&
-                     request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null &&
-                       request.auth.uid in request.resource.data.participants;
-      allow update: if request.auth != null &&
-                       request.auth.uid in resource.data.participants;
-      allow delete: if request.auth != null &&
-                       request.auth.uid in resource.data.participants;
-    }
-
-    // Messages collection - ONLY participants of the conversation can read/delete messages
-    match /messages/{messageId} {
-      allow read: if request.auth != null &&
-                     request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
-      allow create: if request.auth != null &&
-                       request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants;
-      allow delete: if request.auth != null &&
-                       request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
-    }
-  }
-}
+```bash
+firebase deploy --only firestore:rules
 ```
+
+Or manually copy the rules from [`firestore.rules`](firestore.rules) to the Firebase Console:
+1. Go to Firestore Database → Rules tab
+2. Copy the contents of `firestore.rules`
+3. Paste and publish
+
+**Note:** The authoritative security rules are maintained in [`firestore.rules`](firestore.rules). Always refer to that file for the latest rules.
 
 ### 4. Get Anthropic API Key
 
@@ -287,24 +276,21 @@ lingo/
 
 The translation feature uses Claude AI (Sonnet 4.5) to translate messages in real-time. Supported languages:
 
-- Spanish
-- French
-- German
-- Italian
-- Portuguese
-- Russian
-- Japanese
-- Korean
-- Chinese
-- Arabic
-- Hindi
+- 🇬🇧 English
+- 🇪🇸 Spanish (Español)
+- 🇫🇷 French (Français)
+- 🇩🇪 German (Deutsch)
+- 🇮🇹 Italian (Italiano)
+- 🇵🇹 Portuguese (Português)
+- 🇷🇺 Russian (Русский)
+- 🇨🇳 Chinese (中文)
+- 🇯🇵 Japanese (日本語)
+- 🇰🇷 Korean (한국어)
+- 🇸🇦 Arabic (العربية)
+- 🇮🇳 Hindi (हिन्दी)
+- 🇸🇪 Swedish (Svenska)
 
-To translate a message:
-1. Hover over any message
-2. Click the three dots menu
-3. Click "Translate"
-4. Select target language
-5. The message will be translated in place
+**Security Notice:** When you translate a message, it's sent to Claude AI for processing. This temporarily breaks end-to-end encryption for that message. The app will warn you before translating.
 
 ## 📱 Usage
 
@@ -314,26 +300,58 @@ To translate a message:
 2. Click "Don't have an account? Sign up"
 3. Enter your display name, email, and password
 4. Click "Sign Up"
+5. **Important:** Save your recovery code - you'll need it if you lose access
+
+### Managing Contacts
+
+1. Click the "Contacts" tab
+2. Click "Add Contact"
+3. Enter their email address
+4. They'll appear in your contacts list once added
 
 ### Starting a Conversation
 
+**One-on-One Chat:**
 1. Click "New Conversation"
-2. Enter the recipient's email address
+2. Select a contact from your list
 3. Click "Start Conversation"
+
+**Group Chat:**
+1. Click "New Conversation"
+2. Select multiple contacts using checkboxes
+3. Click "Create Group Chat"
+
+### Naming Conversations
+
+1. Open any conversation
+2. Click the menu (⋮) in the top right
+3. Click "Edit Name"
+4. Enter a custom name or leave empty to use participant names
+5. Everyone in the chat will see a system message about the name change
+
+### Adding Participants to Group Chats
+
+1. Open a conversation
+2. Click the menu (⋮) in the top right
+3. Click "Add Participant"
+4. Select a contact from your list
+5. Click "Add"
 
 ### Sending Messages
 
 1. Select a conversation from the sidebar
 2. Type your message in the input field
 3. Press Enter or click the send button
+4. **Mobile:** Use the back arrow to return to conversation list
 
 ### Translating Messages
 
-1. Hover over any message
+1. Hover over any message (or tap on mobile)
 2. Click the three dots (⋮) menu
 3. Click "Translate"
-4. Select your desired language
-5. The message will be instantly translated
+4. **Note:** A security warning will appear (translation breaks E2E encryption)
+5. Select your desired language
+6. The message will be instantly translated
 
 ## 🛠️ Troubleshooting
 

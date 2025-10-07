@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConversations } from '@/hooks/useConversations';
+import { useContacts } from '@/hooks/useContacts';
 import { useStore } from '@/store/useStore';
-import { X } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface NewConversationModalProps {
@@ -12,23 +13,61 @@ interface NewConversationModalProps {
 }
 
 export default function NewConversationModal({ onClose }: NewConversationModalProps) {
-  const [email, setEmail] = useState('');
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
-  const { startConversation } = useConversations();
-  const { setSelectedConversationId } = useStore();
+  const { contacts } = useContacts();
+  const { setSelectedConversationId, currentUser } = useStore();
+
+  const toggleContact = (contactId: string) => {
+    setSelectedContactIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(contactId)) {
+        newSet.delete(contactId);
+      } else {
+        newSet.add(contactId);
+      }
+      return newSet;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedContactIds.size === 0 || !currentUser) return;
+
     setLoading(true);
 
     try {
-      const conversationId = await startConversation(email);
-      if (conversationId) {
-        setSelectedConversationId(conversationId);
-        toast.success('Conversation started!');
-        onClose();
+      const selectedContacts = contacts.filter(c => selectedContactIds.has(c.id));
+      if (selectedContacts.length === 0) {
+        toast.error('No contacts selected');
+        return;
       }
+
+      // Create conversation with all selected participants
+      const { createConversation } = await import('@/lib/db');
+
+      const participantIds = [currentUser.id, ...selectedContacts.map(c => c.id)];
+      const participantDetails: any = {
+        [currentUser.id]: {
+          displayName: currentUser.displayName,
+          publicKey: currentUser.publicKey,
+        }
+      };
+
+      selectedContacts.forEach(contact => {
+        participantDetails[contact.id] = {
+          displayName: contact.displayName,
+          publicKey: contact.publicKey,
+        };
+      });
+
+      const conversationId = await createConversation(participantIds, participantDetails);
+
+      setSelectedConversationId(conversationId);
+      toast.success(selectedContacts.length === 1 ? 'Conversation started!' : 'Group chat created!');
+      onClose();
     } catch (error: any) {
+      console.error('Failed to create conversation:', error);
       toast.error(error.message || 'Failed to start conversation');
     } finally {
       setLoading(false);
@@ -61,29 +100,48 @@ export default function NewConversationModal({ onClose }: NewConversationModalPr
             </button>
           </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">
-                Recipient Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="user@example.com"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                required
-              />
+          {contacts.length === 0 ? (
+            <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+              <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="text-sm mb-1">No contacts yet</p>
+              <p className="text-xs">Add a contact first to start a conversation</p>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Select Contacts {selectedContactIds.size > 0 && `(${selectedContactIds.size} selected)`}
+                </label>
+                <div className="max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                  {contacts.map((contact) => (
+                    <label
+                      key={contact.id}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-0"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedContactIds.has(contact.id)}
+                        onChange={() => toggleContact(contact.id)}
+                        className="w-4 h-4 text-primary-500 rounded focus:ring-2 focus:ring-primary-500"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{contact.displayName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{contact.email}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Starting...' : 'Start Conversation'}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading || selectedContactIds.size === 0}
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Creating...' : selectedContactIds.size > 1 ? 'Create Group Chat' : 'Start Conversation'}
+              </button>
+            </form>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

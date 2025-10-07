@@ -10,6 +10,10 @@ interface AppState {
   userPassword: string | null;
   setUserPassword: (password: string | null) => void;
 
+  // Signup state (prevent auto-login during signup)
+  isSigningUp: boolean;
+  setIsSigningUp: (isSigningUp: boolean) => void;
+
   // Conversations
   conversations: Conversation[];
   setConversations: (conversations: Conversation[]) => void;
@@ -32,6 +36,26 @@ interface AppState {
   // Loading states
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+
+  // Translation loading states
+  translatingMessages: Set<string>;
+  addTranslatingMessage: (messageId: string) => void;
+  removeTranslatingMessage: (messageId: string) => void;
+
+  // Notification settings
+  notificationsEnabled: boolean;
+  notificationSoundEnabled: boolean;
+  setNotificationsEnabled: (enabled: boolean) => void;
+  setNotificationSoundEnabled: (enabled: boolean) => void;
+
+  // Key recovery trigger
+  keyRestoredAt: number;
+  triggerKeyRestored: () => void;
+
+  // Read notifications tracking (which conversation messages have been seen)
+  readNotifications: Set<string>; // Set of messageIds that have been marked as read
+  markConversationAsRead: (conversationId: string, messageIds: string[]) => void;
+  clearReadNotifications: () => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -42,6 +66,10 @@ export const useStore = create<AppState>((set) => ({
   // Password state
   userPassword: null,
   setUserPassword: (password) => set({ userPassword: password }),
+
+  // Signup state
+  isSigningUp: false,
+  setIsSigningUp: (isSigningUp) => set({ isSigningUp }),
 
   // Conversations
   conversations: [],
@@ -88,4 +116,50 @@ export const useStore = create<AppState>((set) => ({
   // Loading states
   isLoading: false,
   setIsLoading: (loading) => set({ isLoading: loading }),
+
+  // Translation loading states
+  translatingMessages: new Set(),
+  addTranslatingMessage: (messageId) => set((state) => {
+    const newSet = new Set(state.translatingMessages);
+    newSet.add(messageId);
+    return { translatingMessages: newSet };
+  }),
+  removeTranslatingMessage: (messageId) => set((state) => {
+    const newSet = new Set(state.translatingMessages);
+    newSet.delete(messageId);
+    return { translatingMessages: newSet };
+  }),
+
+  // Notification settings
+  notificationsEnabled: typeof window !== 'undefined'
+    ? localStorage.getItem('notificationsEnabled') !== 'false'
+    : true,
+  notificationSoundEnabled: typeof window !== 'undefined'
+    ? localStorage.getItem('notificationSoundEnabled') !== 'false'
+    : true,
+  setNotificationsEnabled: (enabled) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notificationsEnabled', String(enabled));
+    }
+    set({ notificationsEnabled: enabled });
+  },
+  setNotificationSoundEnabled: (enabled) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notificationSoundEnabled', String(enabled));
+    }
+    set({ notificationSoundEnabled: enabled });
+  },
+
+  // Key recovery trigger
+  keyRestoredAt: 0,
+  triggerKeyRestored: () => set({ keyRestoredAt: Date.now() }),
+
+  // Read notifications tracking
+  readNotifications: new Set(),
+  markConversationAsRead: (conversationId, messageIds) => set((state) => {
+    const newSet = new Set(state.readNotifications);
+    messageIds.forEach(id => newSet.add(id));
+    return { readNotifications: newSet };
+  }),
+  clearReadNotifications: () => set({ readNotifications: new Set() }),
 }));

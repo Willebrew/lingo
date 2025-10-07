@@ -97,13 +97,15 @@ export async function sendMessage(
   conversationId: string,
   senderId: string,
   senderName: string,
-  encryptedContent: { [recipientId: string]: string }
+  encryptedContent: { [recipientId: string]: string },
+  isSystemMessage: boolean = false
 ): Promise<string> {
   console.log('[db] Preparing message document...', {
     conversationId,
     senderId,
     senderName,
-    encryptedForParticipants: Object.keys(encryptedContent)
+    encryptedForParticipants: Object.keys(encryptedContent),
+    isSystemMessage
   });
 
   const messageData: Omit<Message, 'id'> = {
@@ -112,6 +114,7 @@ export async function sendMessage(
     senderName,
     encryptedContent,
     timestamp: Date.now(),
+    ...(isSystemMessage && { isSystemMessage: true }),
   };
 
   try {
@@ -216,6 +219,26 @@ export async function findOrCreateConversation(
   };
 
   return await createConversation([currentUserId, otherUserId], participantDetails);
+}
+
+/**
+ * Add a participant to an existing conversation
+ */
+export async function addParticipantToConversation(
+  conversationId: string,
+  userId: string,
+  displayName: string,
+  publicKey: string
+): Promise<void> {
+  const conversationRef = doc(db, 'conversations', conversationId);
+
+  await updateDoc(conversationRef, {
+    participants: arrayUnion(userId),
+    [`participantDetails.${userId}`]: {
+      displayName,
+      publicKey,
+    },
+  });
 }
 
 /**

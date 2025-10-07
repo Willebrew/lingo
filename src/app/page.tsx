@@ -11,6 +11,7 @@ export default function Home() {
   const { currentUser } = useStore();
   const [mounted, setMounted] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [showingRecoveryModal, setShowingRecoveryModal] = useState(false);
   useAuth();
   useTheme();
 
@@ -40,5 +41,10 @@ export default function Home() {
     );
   }
 
-  return currentUser ? <ChatLayout /> : <AuthForm />;
+  // If showing recovery modal, keep showing AuthForm even if user is set
+  if (showingRecoveryModal) {
+    return <AuthForm onRecoveryModalChange={setShowingRecoveryModal} />;
+  }
+
+  return currentUser ? <ChatLayout /> : <AuthForm onRecoveryModalChange={setShowingRecoveryModal} />;
 }

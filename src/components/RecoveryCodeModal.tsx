@@ -18,20 +18,22 @@ export default function RecoveryCodeModal({ recoveryCode, onConfirm }: RecoveryC
   const handleCopy = () => {
     navigator.clipboard.writeText(recoveryCode);
     setCopied(true);
-    toast.success('Recovery code copied to clipboard');
+    toast.success('Private key copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
     const blob = new Blob(
       [
-        'Lingo Recovery Code\n' +
-        '===================\n\n' +
-        'Recovery Code: ' + recoveryCode + '\n\n' +
-        'IMPORTANT: Keep this code safe and secure!\n' +
-        '- You need this code to recover your account if you lose access\n' +
-        '- Without this code, you cannot decrypt your messages\n' +
-        '- Lingo cannot recover this code for you\n' +
+        'Lingo Private Key Backup\n' +
+        '========================\n\n' +
+        'Private Key: ' + recoveryCode + '\n\n' +
+        'CRITICAL: Keep this private key safe and secure!\n' +
+        '- This is your encryption private key\n' +
+        '- You need this to restore your account and decrypt messages\n' +
+        '- Without this key, you cannot decrypt your messages\n' +
+        '- Lingo cannot recover this key for you - it only exists on your device\n' +
+        '- Anyone with this key can decrypt your messages - keep it secret!\n' +
         '- Store it in a secure password manager or safe location\n\n' +
         'Generated: ' + new Date().toLocaleString() + '\n'
       ],
@@ -40,13 +42,13 @@ export default function RecoveryCodeModal({ recoveryCode, onConfirm }: RecoveryC
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'lingo-recovery-code-' + Date.now() + '.txt';
+    a.download = 'lingo-private-key-' + Date.now() + '.txt';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setDownloaded(true);
-    toast.success('Recovery code downloaded');
+    toast.success('Private key downloaded');
   };
 
   const canProceed = (copied || downloaded) && confirmed;
@@ -63,9 +65,9 @@ export default function RecoveryCodeModal({ recoveryCode, onConfirm }: RecoveryC
             <Key className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold">Save Your Recovery Code</h3>
+            <h3 className="text-xl font-bold">Save Your Private Key</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Critical - Required to recover your account
+              Critical - Required for E2E encryption
             </p>
           </div>
         </div>
@@ -75,21 +77,22 @@ export default function RecoveryCodeModal({ recoveryCode, onConfirm }: RecoveryC
             <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-red-800 dark:text-red-200 font-semibold mb-1">
-                ⚠️ CRITICAL: You must save this code NOW!
+                ⚠️ CRITICAL: You must save this private key NOW!
               </p>
               <ul className="text-xs text-red-700 dark:text-red-300 space-y-1 ml-4 list-disc">
-                <li>You need this code to recover your account</li>
+                <li>This is your encryption private key - you need it to decrypt messages</li>
                 <li>Without it, you&apos;ll lose access to all your messages forever</li>
-                <li>Lingo cannot recover this code for you - it&apos;s only stored on your device</li>
-                <li>This is the ONLY time you&apos;ll see this code</li>
+                <li>Anyone with this key can decrypt your messages - keep it secret!</li>
+                <li>Lingo cannot recover this key - it&apos;s only stored on your device</li>
+                <li>This is the ONLY time you&apos;ll see this key</li>
               </ul>
             </div>
           </div>
         </div>
 
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">Your Recovery Code:</label>
-          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 font-mono text-lg text-center select-all border-2 border-primary-500">
+          <label className="block text-sm font-medium mb-2">Your Private Key:</label>
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 font-mono text-sm text-center select-all border-2 border-primary-500 break-all">
             {recoveryCode}
           </div>
         </div>
@@ -121,7 +124,7 @@ export default function RecoveryCodeModal({ recoveryCode, onConfirm }: RecoveryC
               className="mt-1 w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-500"
             />
             <span className="text-sm text-yellow-800 dark:text-yellow-200 flex-1">
-              <strong>I understand</strong> that I must save this recovery code. If I lose it, I will
+              <strong>I understand</strong> that I must save this private key. If I lose it, I will
               permanently lose access to my encrypted messages and there is no way to recover them.
             </span>
           </label>
@@ -132,12 +135,12 @@ export default function RecoveryCodeModal({ recoveryCode, onConfirm }: RecoveryC
           disabled={!canProceed}
           className={'w-full px-4 py-3 rounded-lg font-semibold transition-all ' + (canProceed ? 'bg-primary-500 hover:bg-primary-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed')}
         >
-          I&apos;ve Saved My Recovery Code - Continue
+          I&apos;ve Saved My Private Key - Continue
         </button>
 
         {!canProceed && (
           <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
-            {!(copied || downloaded) && 'Please copy or download your recovery code'}
+            {!(copied || downloaded) && 'Please copy or download your private key'}
             {(copied || downloaded) && !confirmed && 'Please confirm you understand the importance'}
           </p>
         )}
