@@ -70,10 +70,10 @@ export default function ChatLayout() {
         <div className="absolute inset-x-[-10%] bottom-[-12%] h-[360px] bg-gradient-to-t from-white/45 via-white/20 to-transparent blur-[120px]" />
       </div>
 
-      <div className="relative z-10 flex h-screen flex-col px-4 pb-20 pt-6 sm:px-6 lg:px-10 lg:pb-8">
-        <div className="flex flex-1 gap-4 overflow-hidden">
+      <div className="relative z-10 flex h-screen flex-col">
+        <div className="flex flex-1 overflow-hidden">
           {/* Desktop: Icon Sidebar */}
-          <div className="hidden lg:flex w-[96px] flex-col rounded-[30px] border border-white/15 bg-white/8 p-4 text-slate-700 shadow-[0_26px_80px_rgba(62,76,177,0.12)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/20">
+          <div className="hidden lg:flex w-[96px] flex-col border-r border-white/15 bg-white/8 p-4 text-slate-700 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/20">
             <div className="flex h-16 w-full items-center justify-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/40 bg-white/80 shadow-lg dark:border-white/10 dark:bg-slate-950/70">
                 <Image src="/logo.png" alt="Lingo" width={32} height={32} className="h-8 w-8 rounded-xl object-cover" priority />
@@ -123,7 +123,7 @@ export default function ChatLayout() {
 
           {/* Desktop: Middle Panel */}
           <div className="hidden lg:flex w-[380px] flex-col">
-            <div className="flex h-full w-full flex-col overflow-hidden rounded-[34px] border border-white/15 bg-white/10 shadow-[0_30px_90px_rgba(62,76,177,0.15)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/40">
+            <div className="flex h-full w-full flex-col overflow-hidden border-r border-white/15 bg-white/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/40">
               {activeView === 'notifications' ? (
                 <NotificationsPanel onConversationClick={() => setActiveView('messages')} />
               ) : activeView === 'settings' ? (
@@ -136,7 +136,7 @@ export default function ChatLayout() {
 
           {/* Main Content Area */}
           <div className="flex-1">
-            <div className="flex h-full flex-col overflow-hidden rounded-[38px] border border-white/10 bg-white/8 shadow-[0_40px_110px_rgba(62,76,177,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/45">
+            <div className="flex h-full flex-col overflow-hidden bg-white/8 backdrop-blur-2xl dark:bg-slate-950/45">
               <div className="block h-full lg:hidden">
                 {selectedConversationId ? (
                   <ChatView />
@@ -158,7 +158,7 @@ export default function ChatLayout() {
 
         {/* Mobile: Bottom Navigation */}
         <div className="lg:hidden">
-          <div className="fixed bottom-4 left-1/2 z-30 w-[92%] max-w-md -translate-x-1/2 rounded-full border border-white/50 bg-white/70 px-4 py-3 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70">
+          <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/50 bg-white/70 px-4 py-3 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70">
             <div className="flex items-center justify-between">
               {[
                 { id: 'messages' as ViewType, icon: MessageSquare, label: 'Messages' },

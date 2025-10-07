@@ -297,8 +297,9 @@ export async function getPrivateKey(userId: string, password: string, silent: bo
 
 /**
  * Restore private key from saved backup (the actual base64 private key)
+ * Verifies the private key matches the user's public key
  */
-export async function restorePrivateKey(userId: string, privateKey: string, password: string): Promise<boolean> {
+export async function restorePrivateKey(userId: string, privateKey: string, password: string, userPublicKey: string): Promise<boolean> {
   if (typeof window !== 'undefined') {
     try {
       const trimmedKey = privateKey.trim();
@@ -324,14 +325,17 @@ export async function restorePrivateKey(userId: string, privateKey: string, pass
         return false;
       }
 
-      // Test if the key can actually be used for encryption
+      // CRITICAL: Verify this private key matches the user's public key
       try {
-        const testPublicKey = nacl.box.keyPair().publicKey;
-        const testMessage = new Uint8Array([1, 2, 3]);
-        const testNonce = nacl.randomBytes(nacl.box.nonceLength);
-        nacl.box(testMessage, testNonce, testPublicKey, decoded);
+        const keyPair = nacl.box.keyPair.fromSecretKey(decoded);
+        const derivedPublicKey = naclUtil.encodeBase64(keyPair.publicKey);
+
+        if (derivedPublicKey !== userPublicKey) {
+          console.error('[encryption] Private key does not match user\'s public key');
+          return false;
+        }
       } catch (e) {
-        console.error('[encryption] Private key validation failed - key cannot be used for encryption');
+        console.error('[encryption] Failed to derive public key from private key');
         return false;
       }
 
