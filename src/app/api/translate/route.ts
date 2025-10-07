@@ -140,8 +140,24 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Translation error:', error);
+
+    // Handle Anthropic API specific errors
+    if (error.status === 529) {
+      return NextResponse.json(
+        { error: 'Translation service is temporarily overloaded. Please try again in a few seconds.' },
+        { status: 503 }
+      );
+    }
+
+    if (error.status === 429) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please wait a moment before translating again.' },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Translation failed' },
+      { error: 'Translation failed. Please try again.' },
       { status: 500 }
     );
   }
